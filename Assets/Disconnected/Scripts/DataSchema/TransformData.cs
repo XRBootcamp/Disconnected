@@ -1,21 +1,24 @@
 using UnityEngine;
 using System;
 
-[Serializable]
-public class TransformData
+namespace Disconnected.Scripts.DataSchema
 {
-    /// <summary>
-    /// Local Position.
-    /// </summary>
-    public Vector3 position;
+    [Serializable]
+    public class TransformData
+    {
+        /// <summary>
+        /// Local Position.
+        /// </summary>
+        public Vector3 position;
 
-    /// <summary>
-    /// Local Rotation.
-    /// </summary>
-    public Quaternion rotation;
+        /// <summary>
+        /// Local Rotation.
+        /// </summary>
+        public Quaternion rotation;
 
-    /// <summary>
-    /// Local Scale.
-    /// </summary>
-    public Vector3 scale;
+        /// <summary>
+        /// Local Scale.
+        /// </summary>
+        public Vector3 scale;
+    }
 }

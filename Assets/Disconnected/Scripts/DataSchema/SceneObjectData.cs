@@ -1,39 +1,42 @@
 using System;
 
-[Serializable]
-public class SceneObjectData
+namespace Disconnected.Scripts.DataSchema
 {
-    /// <summary>
-    /// Id Identifiesr
-    /// </summary>
-    public string guid;
+    [Serializable]
+    public class SceneObjectData
+    {
+        /// <summary>
+        /// Id Identifiesr
+        /// </summary>
+        public string guid;
 
-    /// <summary>
-    /// Name in hierarchy
-    /// </summary>
-    public string objectName;
+        /// <summary>
+        /// Name in hierarchy
+        /// </summary>
+        public string objectName;
 
-    /// <summary>
-    ///  GUID  of the parent, if null will be a child of the level container.
-    /// </summary>
-    public string parentGuid;
+        /// <summary>
+        ///  GUID  of the parent, if null will be a child of the level container.
+        /// </summary>
+        public string parentGuid;
 
-    /// <summary>
-    /// Base asset reference in cloud
-    /// </summary>
-    public string assetReference;
+        /// <summary>
+        /// Base asset reference in cloud
+        /// </summary>
+        public string assetReference;
 
-    /// <summary>
-    /// Local Data transformation.
-    /// </summary>
-    public TransformData transformData;
+        /// <summary>
+        /// Local Data transformation.
+        /// </summary>
+        public TransformData transformData;
 
-    // --- Data Components ---
-    
-    public bool hasAudioSource;
-    public AudioSourceData audioSourceData;
+        // --- Data Components ---
 
-    // here we can add another components later
-    // public bool hasLight;
-    // public LightData lightData;
+        public bool hasAudioSource;
+        public AudioSourceData audioSourceData;
+
+        // here we can add another components later
+        // public bool hasLight;
+        // public LightData lightData;
+    }
 }

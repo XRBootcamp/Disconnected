@@ -1,21 +1,24 @@
 using System;
 
-[Serializable]
-public class AudioSourceData
+namespace Disconnected.Scripts.DataSchema
 {
-    public bool isEnabled;
-    
-    /// <summary>
-    /// Audio source.
-    /// </summary>
-    public string audioClipReference;
+    [Serializable]
+    public class AudioSourceData
+    {
+        public bool isEnabled;
 
-    public bool loop;
-    public float volume;
-    public float pitch;
+        /// <summary>
+        /// Audio source.
+        /// </summary>
+        public string audioClipReference;
 
-    /// <summary>
-    /// 2D - 3D Mix.
-    /// </summary>
-    public float spatialBlend;
+        public bool loop;
+        public float volume;
+        public float pitch;
+
+        /// <summary>
+        /// 2D - 3D Mix.
+        /// </summary>
+        public float spatialBlend;
+    }
 }
