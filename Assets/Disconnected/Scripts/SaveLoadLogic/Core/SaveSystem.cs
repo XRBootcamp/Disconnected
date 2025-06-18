@@ -9,7 +9,6 @@ namespace Disconnected.Scripts.Core
 
 public class SaveSystem : MonoBehaviour
 {
-    // A global, static instance for easy access from other scripts.
     public static SaveSystem instance;
 
     private void Awake()
@@ -28,6 +27,10 @@ public class SaveSystem : MonoBehaviour
     /// Saves the current user-created scene to a persistent file.
     /// </summary>
     /// <param name="levelName">The name for the level, used as the folder name.</param>
+     /// <summary>
+    /// Saves the current user-created scene to a persistent file.
+    /// </summary>
+    /// <param name="levelName">The name for the level, used as the folder name.</param>
     public void SaveLevel(string levelName)
     {
         LevelData levelData = new LevelData();
@@ -38,11 +41,63 @@ public class SaveSystem : MonoBehaviour
 
         foreach (UniqueID uniqueID in sceneObjects)
         {
-            // TODO: Implement the logic to convert a GameObject to SceneObjectData.
-            // This is our next step. We will populate the levelData.objectsInScene list here.
+            SceneObjectData objectData = new SceneObjectData();
+
+            // 1. Get basic data: GUID and name
+            objectData.guid = uniqueID.GUID;
+            objectData.objectName = uniqueID.gameObject.name;
+
+            // 2. Get Parent GUID (this is crucial for hierarchy)
+            Transform parent = uniqueID.transform.parent;
+            if (parent != null && parent.TryGetComponent<UniqueID>(out UniqueID parentUniqueID))
+            {
+                objectData.parentGuid = parentUniqueID.GUID;
+            }
+            else
+            {
+                // If there's no parent, or the parent is not part of the level (lacks a UniqueID),
+                // it's a root object within the level.
+                objectData.parentGuid = string.Empty;
+            }
+
+            // 3. Get local transform data
+            objectData.transformData = new TransformData
+            {
+                position = uniqueID.transform.localPosition,
+                rotation = uniqueID.transform.localRotation,
+                scale = uniqueID.transform.localScale
+            };
+
+            // 4. Get asset reference (using placeholders for now)
+            // TODO: This logic will later be more intelligent.
+            objectData.assetSource = AssetSourceType.LocalFile; // Assuming it's a user-generated asset
+            objectData.assetReferenceKey = "primitive_cube"; // Placeholder key
+
+            // 5. Get component data (example with AudioSource)
+            if (uniqueID.TryGetComponent<AudioSource>(out AudioSource audioSource))
+            {
+                objectData.hasAudioSource = true;
+                objectData.audioSourceData = new AudioSourceData
+                {
+                    isEnabled = audioSource.enabled,
+                    loop = audioSource.loop,
+                    volume = audioSource.volume,
+                    pitch = audioSource.pitch,
+                    spatialBlend = audioSource.spatialBlend,
+                    // TODO: The audio clip reference will also be dynamic later
+                    audioClipReference = "some_sound.wav"
+                };
+            }
+            else
+            {
+                objectData.hasAudioSource = false;
+            }
+
+            // 6. Add the populated object data to our level list
+            levelData.objectsInScene.Add(objectData);
         }
 
-        // For easier debugging.
+        // Easier debugging.
         string json = JsonUtility.ToJson(levelData, true);
 
         string directoryPath = Path.Combine(Application.persistentDataPath, "levels", levelName);
@@ -52,6 +107,7 @@ public class SaveSystem : MonoBehaviour
         File.WriteAllText(filePath, json);
 
         Debug.Log($"Level saved to: {filePath}");
+        Debug.Log($"Persistent Data Path is: {Application.persistentDataPath}"); 
 
         // TODO: Also save binary assets like .glb or .png files into the 'directoryPath'.
     }
