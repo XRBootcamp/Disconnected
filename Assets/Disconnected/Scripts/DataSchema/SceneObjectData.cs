@@ -6,36 +6,46 @@ namespace Disconnected.Scripts.DataSchema
     public class SceneObjectData
     {
         /// <summary>
-        /// Id Identifiesr
+        /// The Global Unique Identifier for this object.
         /// </summary>
         public string guid;
 
         /// <summary>
-        /// Name in hierarchy
+        /// The name of the object in the hierarchy.
         /// </summary>
         public string objectName;
 
         /// <summary>
-        ///  GUID  of the parent, if null will be a child of the level container.
+        /// The GUID of the parent object. If null or empty, it's a direct child of the [LevelContainer].
         /// </summary>
         public string parentGuid;
 
+        // --- ASSET REFERENCE ---
+    
         /// <summary>
-        /// Base asset reference in cloud
+        /// Defines where to load the asset from (e.g., Addressables system or a local file).
         /// </summary>
-        public string assetReference;
+        public AssetSourceType assetSource;
 
         /// <summary>
-        /// Local Data transformation.
+        /// The key or path for the asset. 
+        /// If assetSource is Addressable, this is the Addressable Key.
+        /// If assetSource is LocalFile, this is the relative file path (e.g., "my_model.glb").
+        /// </summary>
+        public string assetReferenceKey;
+
+        /// <summary>
+        /// The local transform data for the object.
         /// </summary>
         public TransformData transformData;
 
-        // --- Data Components ---
-
+        // --- COMPONENT DATA ---
+        // We use a boolean to know if we should read this component's data on load.
+    
         public bool hasAudioSource;
         public AudioSourceData audioSourceData;
 
-        // here we can add another components later
+        // We can add more component data here in the future.
         // public bool hasLight;
         // public LightData lightData;
     }
