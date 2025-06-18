@@ -2,6 +2,7 @@ using UnityEngine;
 using System.IO; 
 using System.Collections.Generic; 
 using Disconnected.Scripts.DataSchema;
+using Sirenix.OdinInspector;
 
 namespace Disconnected.Scripts.Core
 {
@@ -31,6 +32,8 @@ public class SaveSystem : MonoBehaviour
     /// Saves the current user-created scene to a persistent file.
     /// </summary>
     /// <param name="levelName">The name for the level, used as the folder name.</param>
+    
+    [Button]
     public void SaveLevel(string levelName)
     {
         LevelData levelData = new LevelData();
