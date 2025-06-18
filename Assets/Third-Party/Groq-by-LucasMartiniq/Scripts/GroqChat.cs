@@ -7,17 +7,17 @@ using NaughtyAttributes;
 
 public class GroqChat : MonoBehaviour
 {
-    [SerializeField] private string apiKey;
     [SerializeField, TextArea] private string userInput = "Hello, Groq! What can you do?";
-
-    private GroqApiClient groqApi;
     private List<JsonObject> messageHistory = new List<JsonObject>();
 
     [Button]
     void SendRequest()
     {
-        if (groqApi == null)
-            groqApi = new GroqApiClient(apiKey);
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            return;
+        }
 
         // Add new user message to history
         messageHistory.Add(new JsonObject
@@ -46,7 +46,7 @@ public class GroqChat : MonoBehaviour
             ["messages"] = messagesArray
         };
 
-        var task = groqApi.CreateChatCompletionAsync(request);
+        var task = APIKeyLoader.Instance.GroqApi.CreateChatCompletionAsync(request);
 
         while (!task.IsCompleted)
             yield return null;
@@ -74,5 +74,4 @@ public class GroqChat : MonoBehaviour
             }
         }
     }
-
 }

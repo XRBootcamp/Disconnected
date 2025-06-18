@@ -8,17 +8,29 @@ using UnityEngine.Profiling;
 public class WhisperTranscriber : MonoBehaviour
 {
     public string whisperEndpoint = "https://api.groq.com/openai/v1/audio/transcriptions";
-    public string apiKey = "YOUR_API_KEY_HERE";
     public MicRecorder recorder;
 
     [Button]
     private void TranscribeLatestAudio()
     {
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            return;
+        }
+
         StartCoroutine(Transcribe(recorder.GetLastFilePath(), OnTranscription));
     }
 
     public IEnumerator Transcribe(string filePath, System.Action<string> onResult)
     {
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            onResult?.Invoke(null);
+            yield break;
+        }
+
         byte[] audioData = File.ReadAllBytes(filePath);
 
         WWWForm form = new WWWForm();
@@ -28,7 +40,7 @@ public class WhisperTranscriber : MonoBehaviour
         form.AddBinaryData("file", audioData, "audio.wav", "audio/wav");
 
         UnityWebRequest request = UnityWebRequest.Post(whisperEndpoint, form);
-        request.SetRequestHeader("Authorization", "Bearer " + apiKey);
+        request.SetRequestHeader("Authorization", "Bearer " + APIKeyLoader.Config.groqKey);
 
         yield return request.SendWebRequest();
 

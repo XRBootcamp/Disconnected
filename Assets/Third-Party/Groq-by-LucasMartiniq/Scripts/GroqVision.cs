@@ -10,15 +10,15 @@ using NaughtyAttributes; // Ensure it's Unity-compatible
 public class GroqVision : MonoBehaviour
 {
     public RawImage rawImage; // Assign this in the Inspector
-    [SerializeField] private string apiKey = "your_api_key_here";
     [SerializeField] private string model = "model_name";
     [SerializeField] private string prompt = "Describe this image";
 
-    private GroqApiClient groqApi;
-
     void Start()
     {
-        groqApi = new GroqApiClient(apiKey);
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+        }
     }
 
     [Button]
@@ -29,6 +29,12 @@ public class GroqVision : MonoBehaviour
 
     private IEnumerator SendVisionRequest()
     {
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            yield break;
+        }
+
         Texture sourceTexture = rawImage.texture;
 
         if (sourceTexture == null)
@@ -63,7 +69,7 @@ public class GroqVision : MonoBehaviour
         byte[] imageBytes = texture2D.EncodeToJPG(); // or EncodeToPNG()
         string base64Image = Convert.ToBase64String(imageBytes);
 
-        var task = groqApi.CreateVisionCompletionWithTempBase64ImageAsync(base64Image, prompt, model);
+        var task = APIKeyLoader.Instance.GroqApi.CreateVisionCompletionWithTempBase64ImageAsync(base64Image, prompt, model);
 
         while (!task.IsCompleted)
             yield return null;
@@ -79,5 +85,4 @@ public class GroqVision : MonoBehaviour
             Debug.Log("Groq describes: " + content);
         }
     }
-
 }

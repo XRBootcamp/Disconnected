@@ -41,7 +41,7 @@ public class GroqTTS : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
 
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
-    [SerializeField] private string apiKey = "your_groq_api_key_here";
+    
     private const string model = "playai-tts";
     [SerializeField] private PlayAIVoice selectedVoice = PlayAIVoice.Fritz_PlayAI;
     private const string responseFormat = "wav";
@@ -55,17 +55,18 @@ public class GroqTTS : MonoBehaviour
 
     public async Task GenerateAndPlaySpeech(string text)
     {
-        using var client = new HttpClient();
-
-        client.DefaultRequestHeaders.Clear();
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            return;
+        }
 
         var json = $"{{\"model\":\"{model}\",\"voice\":\"{GetVoiceName(selectedVoice)}\",\"input\":\"{text}\",\"response_format\":\"{responseFormat}\"}}";
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         try
         {
-            var response = await client.PostAsync(apiUrl, content);
+            var response = await APIKeyLoader.Instance.GroqHttpClient.PostAsync(apiUrl, content);
 
             if (!response.IsSuccessStatusCode)
             {

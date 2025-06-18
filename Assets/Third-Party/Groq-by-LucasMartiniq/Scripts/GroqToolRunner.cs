@@ -2,30 +2,37 @@ using GroqApiLibrary;
 using NaughtyAttributes;
 using System.Collections.Generic;
 using System.Text.Json;
-
 using UnityEngine;
 using JsonArray = System.Text.Json.Nodes.JsonArray;
 using JsonObject = System.Text.Json.Nodes.JsonObject;
 
 public class GroqToolRunner : MonoBehaviour
 {
-    [SerializeField] private string apiKey = "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";
     [SerializeField] private string prompt = "Spawn a cube and make it red.";
     [SerializeField] private string model = "mixtral-8x7b-32768";
-    private GroqApiClient groqApi;
     private List<Tool> tools;
 
     private void Start()
     {
-        groqApi = new GroqApiClient(apiKey);
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            return;
+        }
         tools = new List<Tool> { BuildSpawnCubeTool(), BuildSpawnSphereTool() };
     }
 
     [Button]
     async void TestPromptWithTools()
     {
+        if (APIKeyLoader.Instance == null)
+        {
+            Debug.LogError("APIKeyLoader instance not found!");
+            return;
+        }
+
         string systemMessage = "You are a helpful assistant that can execute Unity commands.";
-        string result = await groqApi.RunConversationWithToolsAsync(prompt, tools, model, systemMessage);
+        string result = await APIKeyLoader.Instance.GroqApi.RunConversationWithToolsAsync(prompt, tools, model, systemMessage);
         Debug.Log("Response: " + result);
     }
 

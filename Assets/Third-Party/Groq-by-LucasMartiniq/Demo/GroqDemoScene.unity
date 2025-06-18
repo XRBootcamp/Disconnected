@@ -135,7 +135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &70487071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -148,7 +148,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c26dfd67af95be4d926300b4485b121, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: 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
   userInput: Give me a list of colors in Json format
 --- !u!4 &70487072
 Transform:
@@ -182,7 +181,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!82 &268066242
 AudioSource:
   m_ObjectHideFlags: 0
@@ -293,7 +292,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSource: {fileID: 268066242}
-  apiKey: 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
   selectedVoice: 0
   prompt: I love building and shipping new features for our students!
 --- !u!4 &268066244
@@ -585,7 +583,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &455715064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -598,7 +596,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24cfaaac0a5da2246a0aa7c0492be9cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: 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
   prompt: Spawn a sphere and make it red.
   model: llama-3.3-70b-versatile
 --- !u!4 &455715065
@@ -633,7 +630,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &616811673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -647,8 +644,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rawImage: {fileID: 937433649}
-  apiKey: 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
   model: meta-llama/llama-4-scout-17b-16e-instruct
+  prompt: Describe this image
 --- !u!4 &616811674
 Transform:
   m_ObjectHideFlags: 0
@@ -829,7 +826,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1411714651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -843,7 +840,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   whisperEndpoint: https://api.groq.com/openai/v1/audio/transcriptions
-  apiKey: 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
   recorder: {fileID: 1411714652}
 --- !u!114 &1411714652
 MonoBehaviour:
@@ -1055,6 +1051,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1755887527833543847
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421859092231072457, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9116163372570316715, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
+      propertyPath: m_Name
+      value: APIKeyLoader
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 562708c95e49bfd4e8c8ddbcf7ac53c3, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1069,3 +1122,4 @@ SceneRoots:
   - {fileID: 1411714653}
   - {fileID: 455715065}
   - {fileID: 268066244}
+  - {fileID: 1755887527833543847}
