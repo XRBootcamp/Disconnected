@@ -29,33 +29,49 @@ using System.IO;
 using UnityEngine;
 using System.Collections.Generic;
 
-public static class SavWav {
+public static class SavWav
+{
 
 	const int HEADER_SIZE = 44;
 
-	public static bool Save(string filename, AudioClip clip) {
-		if (!filename.ToLower().EndsWith(".wav")) {
+	public static bool Save(string filename, AudioClip clip, bool overwritePath = true)
+	{
+		if (!filename.ToLower().EndsWith(".wav"))
+		{
 			filename += ".wav";
 		}
+		string filepath = "";
+		if (overwritePath) // overwrites whatever the path was written into persistent
+		{
+			// TODO: clean up if other application styles
+			string relativeFilename = filename.Replace(Application.temporaryCachePath, string.Empty).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-		var filepath = Path.Combine(Application.persistentDataPath, filename);
+			filepath = Path.Combine(Application.persistentDataPath, filename);
 
-		Debug.Log(filepath);
+			Debug.Log($"[{(nameof(SavWav))} - Save] overwrite data path to: {filepath}");
+		}
+		else 
+		{
+			filepath = filename;
+		}
 
 		// Make sure directory exists if user is saving to sub dir.
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));
 
-		using (var fileStream = CreateEmpty(filepath)) {
+		using (var fileStream = CreateEmpty(filepath))
+		{
 
 			ConvertAndWrite(fileStream, clip);
 
 			WriteHeader(fileStream, clip);
+			Debug.Log($"[{(nameof(SavWav))} - Save] clip saved in: {filepath}");
 		}
 
 		return true; // TODO: return false if there's a failure saving the file
 	}
 
-	public static AudioClip TrimSilence(AudioClip clip, float min) {
+	public static AudioClip TrimSilence(AudioClip clip, float min)
+	{
 		var samples = new float[clip.samples];
 
 		clip.GetData(samples, 0);
@@ -63,23 +79,29 @@ public static class SavWav {
 		return TrimSilence(new List<float>(samples), min, clip.channels, clip.frequency);
 	}
 
-	public static AudioClip TrimSilence(List<float> samples, float min, int channels, int hz) {
+	public static AudioClip TrimSilence(List<float> samples, float min, int channels, int hz)
+	{
 		return TrimSilence(samples, min, channels, hz, false, false);
 	}
 
-	public static AudioClip TrimSilence(List<float> samples, float min, int channels, int hz, bool _3D, bool stream) {
+	public static AudioClip TrimSilence(List<float> samples, float min, int channels, int hz, bool _3D, bool stream)
+	{
 		int i;
 
-		for (i=0; i<samples.Count; i++) {
-			if (Mathf.Abs(samples[i]) > min) {
+		for (i = 0; i < samples.Count; i++)
+		{
+			if (Mathf.Abs(samples[i]) > min)
+			{
 				break;
 			}
 		}
 
 		samples.RemoveRange(0, i);
 
-		for (i=samples.Count - 1; i>0; i--) {
-			if (Mathf.Abs(samples[i]) > min) {
+		for (i = samples.Count - 1; i > 0; i--)
+		{
+			if (Mathf.Abs(samples[i]) > min)
+			{
 				break;
 			}
 		}
@@ -93,19 +115,21 @@ public static class SavWav {
 		return clip;
 	}
 
-	static FileStream CreateEmpty(string filepath) {
+	static FileStream CreateEmpty(string filepath)
+	{
 		var fileStream = new FileStream(filepath, FileMode.Create);
-	    byte emptyByte = new byte();
+		byte emptyByte = new byte();
 
-	    for(int i = 0; i < HEADER_SIZE; i++) //preparing the header
-	    {
-	        fileStream.WriteByte(emptyByte);
-	    }
+		for (int i = 0; i < HEADER_SIZE; i++) //preparing the header
+		{
+			fileStream.WriteByte(emptyByte);
+		}
 
 		return fileStream;
 	}
 
-	static void ConvertAndWrite(FileStream fileStream, AudioClip clip) {
+	static void ConvertAndWrite(FileStream fileStream, AudioClip clip)
+	{
 
 		var samples = new float[clip.samples];
 
@@ -120,8 +144,9 @@ public static class SavWav {
 
 		int rescaleFactor = 32767; //to convert float to Int16
 
-		for (int i = 0; i<samples.Length; i++) {
-			intData[i] = (short) (samples[i] * rescaleFactor);
+		for (int i = 0; i < samples.Length; i++)
+		{
+			intData[i] = (short)(samples[i] * rescaleFactor);
 			Byte[] byteArr = new Byte[2];
 			byteArr = BitConverter.GetBytes(intData[i]);
 			byteArr.CopyTo(bytesData, i * 2);
@@ -130,7 +155,8 @@ public static class SavWav {
 		fileStream.Write(bytesData, 0, bytesData.Length);
 	}
 
-	static void WriteHeader(FileStream fileStream, AudioClip clip) {
+	static void WriteHeader(FileStream fileStream, AudioClip clip)
+	{
 
 		var hz = clip.frequency;
 		var channels = clip.channels;
@@ -168,7 +194,7 @@ public static class SavWav {
 		Byte[] byteRate = BitConverter.GetBytes(hz * channels * 2); // sampleRate * bytesPerSample*number of channels, here 44100*2*2
 		fileStream.Write(byteRate, 0, 4);
 
-		UInt16 blockAlign = (ushort) (channels * 2);
+		UInt16 blockAlign = (ushort)(channels * 2);
 		fileStream.Write(BitConverter.GetBytes(blockAlign), 0, 2);
 
 		UInt16 bps = 16;
@@ -181,6 +207,6 @@ public static class SavWav {
 		Byte[] subChunk2 = BitConverter.GetBytes(samples * channels * 2);
 		fileStream.Write(subChunk2, 0, 4);
 
-//		fileStream.Close();
+		//		fileStream.Close();
 	}
 }

@@ -38,6 +38,7 @@ public enum PlayAIVoice
 
 public class GroqTTS : MonoBehaviour
 {
+    [SerializeField] private FileEnumPath storeGeneratedWavFiles;
     [SerializeField] private AudioSource audioSource;
 
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
@@ -47,13 +48,21 @@ public class GroqTTS : MonoBehaviour
     private const string responseFormat = "wav";
     [SerializeField] private string prompt = "I love building and shipping new features for our students!";
 
+
+    public bool IsGenerated {get; private set;}
+
     [Button]
     private async void Generate()
     {
         await GenerateAndPlaySpeech(prompt);
     }
 
-    public async Task GenerateAndPlaySpeech(string text)
+    /// <summary>
+    /// Generates TTS audio from the given text, but does not play it. Sets IsGenerated and audioSource.clip.
+    /// </summary>
+    /// <param name="text">The text to synthesize.</param>
+    /// <returns>Task</returns>
+    public async Task GenerateTTS(string text)
     {
         if (APIKeyLoader.Instance == null)
         {
@@ -66,6 +75,8 @@ public class GroqTTS : MonoBehaviour
 
         try
         {
+            IsGenerated = false;
+
             var response = await APIKeyLoader.Instance.GroqHttpClient.PostAsync(apiUrl, content);
 
             if (!response.IsSuccessStatusCode)
@@ -76,13 +87,35 @@ public class GroqTTS : MonoBehaviour
             }
 
             byte[] audioData = await response.Content.ReadAsByteArrayAsync();
+
+
             AudioClip clip = CreateClipFromWav(audioData);
             audioSource.clip = clip;
-            audioSource.Play();
+            if (storeGeneratedWavFiles != FileEnumPath.None)
+            {
+                string filePath = FileManagementExtensions.GenerateFilePath(storeGeneratedWavFiles, FilePaths.TEXT_TO_SPEECH, "tts", FileExtensions.WAV, true);
+                SavWav.Save(filePath, clip, false);
+            }
+            prompt = text;
+            IsGenerated = true;
         }
         catch (Exception ex)
         {
             Debug.LogError("Error generating TTS: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Generates TTS audio and plays it if successful.
+    /// </summary>
+    /// <param name="text">The text to synthesize and play.</param>
+    /// <returns>Task</returns>
+    public async Task GenerateAndPlaySpeech(string text)
+    {
+        await GenerateTTS(text);
+        if (IsGenerated)
+        {
+            audioSource.Play();
         }
     }
 
@@ -123,5 +156,39 @@ public class GroqTTS : MonoBehaviour
             }
         }
         throw new Exception("DATA chunk not found in WAV");
+    }
+
+    public void SetVoice(PlayAIVoice newVoice)
+    {
+        selectedVoice = newVoice;
+    }
+
+    public void SetPrompt(string newPrompt)
+    {
+        prompt = newPrompt;
+    }
+
+    public void SetStoreGeneratedWavFiles(FileEnumPath newEnum)
+    {
+        storeGeneratedWavFiles = newEnum;
+    }
+
+    [Button]
+    public void StopAudio()
+    {
+        if (!IsGenerated) return;
+        audioSource.Stop();
+    }
+
+    [Button]
+    public void PlayAudio()
+    {
+        if (!IsGenerated) return;
+        audioSource.Play();
+    }
+
+    public void SetClip(AudioClip newClip)
+    {
+        audioSource.clip = newClip;
     }
 }

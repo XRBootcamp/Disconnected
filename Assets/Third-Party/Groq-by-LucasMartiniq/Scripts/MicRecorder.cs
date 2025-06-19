@@ -1,17 +1,19 @@
 using UnityEngine;
 using System.IO;
 using NaughtyAttributes;
+using UnityEditor;
 
 public class MicRecorder : MonoBehaviour
 {
-    private AudioClip recordedClip;
-    private string micDevice;
-    private string filePath;
+    protected AudioClip recordedClip;
+    protected string micDevice;
+    protected string filePath;
 
+    [Header("Mic Settings")]
     public int duration = 10; // seconds
     public int sampleRate = 44100;
 
-    void Start()
+    protected void Start()
     {
         micDevice = Microphone.devices[0];
     }
@@ -24,7 +26,7 @@ public class MicRecorder : MonoBehaviour
     }
 
     [Button]
-    public void StopAndSave()
+    public virtual void StopAndSave()
     {
         Microphone.End(micDevice);
         Debug.Log("Recording stopped.");
@@ -32,14 +34,27 @@ public class MicRecorder : MonoBehaviour
         SaveWav("recorded_audio", recordedClip);
     }
 
-    void SaveWav(string filename, AudioClip clip)
+    protected virtual void SaveWav(string filename, AudioClip clip)
     {
         filePath = Path.Combine(Application.persistentDataPath, filename + ".wav");
-        if(SavWav.Save(filename, clip))
+        if(SavWav.Save(filename, clip, true))
         {
             Debug.Log("Saved WAV to: " + filePath);
         }
     }
 
+    
+#if UNITY_EDITOR
+    // NOTE: Only works in UNITY_EDITOR - for test mode usage only
+    public void OverrideAudioClipAndPath(AudioClip clip)
+    {
+        recordedClip = clip;
+        filePath = AssetDatabase.GetAssetPath(clip);
+        Debug.Log($"[{nameof(MicRecorder)}] - TEST MODE: OverrideAudioClipAndPath by {clip.name}");
+    }
+#endif
+
     public string GetLastFilePath() => filePath;
+
+    public AudioClip GetLastAudioClip() => recordedClip;
 }
