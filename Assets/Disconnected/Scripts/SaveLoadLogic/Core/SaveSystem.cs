@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Disconnected.Scripts.DataSchema;
+using GLTFast;
 using Sirenix.OdinInspector;
 using GLTFast.Export;
 
