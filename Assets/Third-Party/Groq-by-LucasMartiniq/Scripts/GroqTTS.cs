@@ -110,13 +110,15 @@ public class GroqTTS : MonoBehaviour
     /// </summary>
     /// <param name="text">The text to synthesize and play.</param>
     /// <returns>Task</returns>
-    public async Task GenerateAndPlaySpeech(string text)
+    public async Task<GroqTTS> GenerateAndPlaySpeech(string text)
     {
         await GenerateTTS(text);
         if (IsGenerated)
         {
             audioSource.Play();
+            return this;
         }
+        return null;
     }
 
     private string GetVoiceName(PlayAIVoice voice)
@@ -191,4 +193,11 @@ public class GroqTTS : MonoBehaviour
     {
         audioSource.clip = newClip;
     }
+
+#if UNITY_EDITOR
+    public void ForceIsGenerated()
+    {
+        IsGenerated = true;
+    }
+#endif
 }

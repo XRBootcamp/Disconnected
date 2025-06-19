@@ -3,6 +3,7 @@ using NaughtyAttributes;
 using Unity.Collections;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 public class AIPipeline : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class AIPipeline : MonoBehaviour
     [Space]
     [SerializeField] private AudioClip micRecording;
     [SerializeField, TextArea(5,20)] private string currentSpeech;
+    [SerializeField] private List<GroqTTS> listOfGeneratedGroqTTS;
 
     
     private GroqTTS currentGroqTTS;
@@ -88,7 +90,27 @@ public class AIPipeline : MonoBehaviour
     [Button]
     private async Task ConvertTextToSpeech()
     {
+        if (AIClientFakes.TryHandleFakeTTS(aiClientToggle, CreateFakeTextToSpeech))
+        {
+            return;
+        }
+
         await CreateTextToSpeech(debugAIVoice, currentSpeech, null);
+    }
+
+    public void CreateFakeTextToSpeech(AudioClip fakeClip)
+    {
+        // TODO: will we need to assign a position, parent?
+        GameObject obj = Instantiate(speech2TextAIPrefab, null);
+        obj.name += "_FAKE";
+        GroqTTS newTTS = obj.GetComponent<GroqTTS>();
+        newTTS.SetClip(fakeClip);
+        newTTS.SetPrompt($"{obj.name} - FAKE PROMPT");
+        newTTS.SetStoreGeneratedWavFiles(FileEnumPath.None); // do not store fake files
+        newTTS.ForceIsGenerated();
+
+        newTTS.PlayAudio();
+        listOfGeneratedGroqTTS.Add(newTTS);
     }
 
     public async Task CreateTextToSpeech(PlayAIVoice aiVoice, string prompt, Transform parent)
@@ -108,7 +130,11 @@ public class AIPipeline : MonoBehaviour
 
         groqTTS.SetVoice(aiVoice);
         groqTTS.SetStoreGeneratedWavFiles(storeSpeech2TextWavFiles);
-        await groqTTS.GenerateAndPlaySpeech(prompt);
+        var newTTS = await groqTTS.GenerateAndPlaySpeech(prompt);
+        if (newTTS != null)
+        {
+            listOfGeneratedGroqTTS.Add(newTTS);
+        }
     }
     #endregion
 
