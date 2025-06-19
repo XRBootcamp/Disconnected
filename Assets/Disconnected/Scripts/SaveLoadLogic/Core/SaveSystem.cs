@@ -27,6 +27,17 @@ namespace Disconnected.Scripts.Core
             }
         }
         [Button]
+        [GUIColor(0.5f, 1f, 0.5f)]
+        private void OpenTempAssetFolder()
+        {
+            string path = Path.Combine(Application.persistentDataPath, "temp_genai_assets");
+            Directory.CreateDirectory(path);
+            #if UNITY_EDITOR
+            System.Diagnostics.Process.Start(path);
+            #endif
+        }
+        
+        [Button]
         [GUIColor(1f, 0.6f, 0.4f)]
         public void SaveLevelFromEditor(string levelName)
         {
@@ -76,13 +87,31 @@ namespace Disconnected.Scripts.Core
             // --- 4. Handle Asset Reference (The intelligent logic) ---
             if (currentGO.TryGetComponent<AssetSourceTracker>(out AssetSourceTracker tracker))
             {
+                objectData.assetSource = tracker.sourceType;
+
+                Debug.Log($"[SAVE DEBUG] Guardando objeto '{currentGO.name}'. Su AssetSourceTracker tiene el tipo: {tracker.sourceType}");
                 string finalAssetFilename = "";
 
                 switch (tracker.sourceType)
                 {
                     case AssetSourceType.LocalFile:
+                        // The asset is already a local file (e.g., from GenAI).
                         finalAssetFilename = tracker.referenceKey;
-                        // TODO: Logic to copy the file if needed.
+                        
+                        // We must copy the file from its source to the level's save folder
+                        // to make the level self-contained.
+                        string tempAssetFolder = Path.Combine(Application.persistentDataPath, "temp_genai_assets");
+                        string sourcePath = Path.Combine(tempAssetFolder, finalAssetFilename);
+                        string destinationPath = Path.Combine(directoryPath, finalAssetFilename);
+
+                        if (File.Exists(sourcePath))
+                        {
+                            File.Copy(sourcePath, destinationPath, true); // 'true' allows overwriting
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Source asset file not found at {sourcePath}. It will not be included in the save.");
+                        }
                         break;
 
                     case AssetSourceType.Addressable:
@@ -101,8 +130,8 @@ namespace Disconnected.Scripts.Core
             }
             else
             {
-                objectData.assetReferenceKey = "placeholder_cube.glb";
-                Debug.LogWarning($"Object '{currentGO.name}' has no AssetSourceTracker. Saving as placeholder.");
+                objectData.assetReferenceKey = string.Empty;
+                Debug.Log($"Object '{currentGO.name}' has no AssetSourceTracker. Saving as an empty container.");
             }
 
             // --- 5. Get component data (example with AudioSource) ---
@@ -137,93 +166,99 @@ namespace Disconnected.Scripts.Core
         Debug.Log($"Level '{levelName}' saved successfully to: {directoryPath}");
     }
 
-        /// <summary>
-        /// Asynchronously loads a level from a persistent file and reconstructs the scene.
-        /// </summary>
         [Button]
-        public async Task LoadLevelAsync(string levelName)
+    [GUIColor(0.4f, 0.8f, 1f)]
+    public void LoadLevelFromEditor(string levelName)
+    {
+        _ = LoadLevelAsync(levelName);
+    }
+    
+    /// <summary>
+    /// Asynchronously loads a level from a persistent file and reconstructs the scene.
+    /// </summary>
+    public async Task LoadLevelAsync(string levelName)
+    {
+        string directoryPath = Path.Combine(Application.persistentDataPath, "levels", levelName);
+        string filePath = Path.Combine(directoryPath, "level.json");
+
+        if (!File.Exists(filePath))
         {
-            string directoryPath = Path.Combine(Application.persistentDataPath, "levels", levelName);
-            string filePath = Path.Combine(directoryPath, "level.json");
+            Debug.LogError($"[Load] Save file not found at: {filePath}");
+            return;
+        }
 
-            if (!File.Exists(filePath))
+        string json = await File.ReadAllTextAsync(filePath);
+        LevelData levelData = JsonUtility.FromJson<LevelData>(json);
+
+        Dictionary<string, GameObject> createdObjects = new Dictionary<string, GameObject>();
+
+        Debug.Log($"[Load] Starting to load {levelData.objectsInScene.Count} objects...");
+
+        // --- FIRST PASS: Instantiate all objects ---
+        foreach (SceneObjectData objectData in levelData.objectsInScene)
+        {
+            GameObject newObject = null;
+
+
+            if (string.IsNullOrEmpty(objectData.assetReferenceKey))
             {
-                Debug.LogError($"Save file not found at: {filePath}");
-                return;
+                newObject = new GameObject(objectData.objectName);
             }
-
-            string json = File.ReadAllText(filePath);
-            LevelData levelData = JsonUtility.FromJson<LevelData>(json);
-
-            // This dictionary helps us find GameObjects by their GUID quickly during the second pass.
-            Dictionary<string, GameObject> createdObjects = new Dictionary<string, GameObject>();
-
-            // --- FIRST PASS: Instantiate all objects from their correct sources ---
-            foreach (SceneObjectData objectData in levelData.objectsInScene)
+            else
             {
-                GameObject newObject = null;
-
-                switch (objectData.assetSource)
+                if (objectData.assetSource == AssetSourceType.LocalFile)
                 {
-                    case AssetSourceType.LocalFile:
-                        var gltf = new GLTFast.GltfImport();
-                        string glbPath = Path.Combine(directoryPath, objectData.assetReferenceKey);
-                        var success = await gltf.Load(glbPath);
+                    string assetPath = Path.Combine(directoryPath, objectData.assetReferenceKey);
+                
+                    if (File.Exists(assetPath))
+                    {
+                        var gltf = new GltfImport();
+                        var success = await gltf.Load("file://" + assetPath);
+
                         if (success)
                         {
                             newObject = new GameObject(objectData.objectName);
                             await gltf.InstantiateMainSceneAsync(newObject.transform);
                         }
-                        else
-                        {
-                            Debug.LogWarning($"Failed to load GLB at path: {glbPath}. Spawning placeholder.");
-                        }
-
-                        break;
-
-                    case AssetSourceType.Addressable:
-                        // TODO: Implement Addressables loading logic.
-                        Debug.Log($"Placeholder for Addressable: {objectData.assetReferenceKey}");
-                        break;
+                    }
                 }
-
-                // If instantiation failed or was not implemented, spawn a placeholder cube.
-                if (newObject == null)
-                {
-                    newObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    newObject.name = objectData.objectName;
-                }
-
-                newObject.AddComponent<UniqueID>().SetGuid(objectData.guid);
-                createdObjects.Add(objectData.guid, newObject);
+                // TODO:"case AssetSourceType.Addressable:" en the future.
             }
 
-            // --- SECOND PASS: Set hierarchy, transforms, and component data ---
-            foreach (SceneObjectData objectData in levelData.objectsInScene)
+            if (newObject == null) 
             {
-                if (!createdObjects.ContainsKey(objectData.guid)) continue;
-                GameObject targetObject = createdObjects[objectData.guid];
+                Debug.LogWarning($"[Load] newObject is null for '{objectData.objectName}'. Spawning fallback cube.");
+                newObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                newObject.name = objectData.objectName + " (Fallback)";
+            }
+            
+            newObject.AddComponent<UniqueID>().SetGuid(objectData.guid);
+            createdObjects.Add(objectData.guid, newObject);
+        }
 
-                // Set Parent by finding it in our dictionary of created objects.
-                if (!string.IsNullOrEmpty(objectData.parentGuid) && createdObjects.ContainsKey(objectData.parentGuid))
-                {
-                    targetObject.transform.SetParent(createdObjects[objectData.parentGuid].transform, false);
-                }
+        // --- SECOND PASS: Set hierarchy and data ---
+        foreach (SceneObjectData objectData in levelData.objectsInScene)
+        {
+            if (!createdObjects.ContainsKey(objectData.guid)) continue;
+            GameObject targetObject = createdObjects[objectData.guid];
 
-                // Set Local Transform.
-                targetObject.transform.localPosition = objectData.transformData.position;
-                targetObject.transform.localRotation = objectData.transformData.rotation;
-                targetObject.transform.localScale = objectData.transformData.scale;
-
-                // Set Component Data.
-                if (objectData.hasAudioSource)
-                {
-                    AudioSource audioSource = targetObject.AddComponent<AudioSource>();
-                    // Logic to populate audioSource properties...
-                }
+            if (!string.IsNullOrEmpty(objectData.parentGuid) && createdObjects.ContainsKey(objectData.parentGuid))
+            {
+                targetObject.transform.SetParent(createdObjects[objectData.parentGuid].transform, false);
             }
 
-            Debug.Log($"Level '{levelName}' loaded successfully!");
+            targetObject.transform.localPosition = objectData.transformData.position;
+            targetObject.transform.localRotation = objectData.transformData.rotation;
+            targetObject.transform.localScale = objectData.transformData.scale;
+
+            if (objectData.hasAudioSource)
+            {
+                AudioSource audioSource = targetObject.AddComponent<AudioSource>();
+                // Logic to populate audioSource properties...
+            }
         }
+        
+        Debug.Log($"[Load] Level '{levelName}' loading process finished!");
+    }
     }
 }

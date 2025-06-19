@@ -3,7 +3,8 @@ namespace Disconnected.Scripts.DataSchema
     /// <summary>
     /// Defines the source from which an asset should be loaded.
     /// </summary>
-    public enum AssetSourceType
+    public enum 
+        AssetSourceType
     {
         /// <summary>
         /// The asset should be loaded from the Addressables system using its key.
