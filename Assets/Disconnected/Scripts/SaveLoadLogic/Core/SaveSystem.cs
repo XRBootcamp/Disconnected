@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Disconnected.Scripts.DataSchema;
 using Sirenix.OdinInspector;
+using GLTFast.Export;
 
 namespace Disconnected.Scripts.Core
 {
@@ -24,92 +25,116 @@ namespace Disconnected.Scripts.Core
                 instance = this;
             }
         }
-
-        /// <summary>
-        /// Saves the current user-created scene to a persistent file.
-        /// </summary>
-        /// <param name="levelName">The name for the level, used as the folder name.</param>
         [Button]
-        public void SaveLevel(string levelName)
+        [GUIColor(1f, 0.6f, 0.4f)]
+        public void SaveLevelFromEditor(string levelName)
         {
-            LevelData levelData = new LevelData();
-            levelData.levelName = levelName;
 
-            // Find all GameObjects with a UniqueID to ensure we only save objects that are part of the level.
-            UniqueID[] sceneObjects = FindObjectsOfType<UniqueID>();
+            _ = SaveLevelAsync(levelName);
+        }
 
-            foreach (UniqueID uniqueID in sceneObjects)
+
+    /// <summary>
+    /// Asynchronously saves the current user-created scene to a persistent file.
+    /// Exports all referenced assets into the level's folder.
+    /// </summary>
+    public async Task SaveLevelAsync(string levelName)
+    {
+        LevelData levelData = new LevelData();
+        levelData.levelName = levelName;
+
+        string directoryPath = Path.Combine(Application.persistentDataPath, "levels", levelName);
+        Directory.CreateDirectory(directoryPath);
+
+        UniqueID[] sceneObjects = FindObjectsOfType<UniqueID>();
+
+        foreach (UniqueID uniqueID in sceneObjects)
+        {
+            SceneObjectData objectData = new SceneObjectData();
+            GameObject currentGO = uniqueID.gameObject;
+
+            // --- 1. Get basic data (GUID, name) ---
+            objectData.guid = uniqueID.GUID;
+            objectData.objectName = currentGO.name;
+
+            // --- 2. Get Parent GUID (Hierarchy) ---
+            Transform parent = currentGO.transform.parent;
+            if (parent != null && parent.TryGetComponent<UniqueID>(out UniqueID parentUniqueID))
             {
-                SceneObjectData objectData = new SceneObjectData();
-
-                // 1. Get basic data: GUID and name
-                objectData.guid = uniqueID.GUID;
-                objectData.objectName = uniqueID.gameObject.name;
-
-                // 2. Get Parent GUID (this is crucial for hierarchy)
-                Transform parent = uniqueID.transform.parent;
-                if (parent != null && parent.TryGetComponent<UniqueID>(out UniqueID parentUniqueID))
-                {
-                    objectData.parentGuid = parentUniqueID.GUID;
-                }
-                else
-                {
-                    // If there's no parent, or the parent is not part of the level (lacks a UniqueID),
-                    // it's a root object within the level.
-                    objectData.parentGuid = string.Empty;
-                }
-
-                // 3. Get local transform data
-                objectData.transformData = new TransformData
-                {
-                    position = uniqueID.transform.localPosition,
-                    rotation = uniqueID.transform.localRotation,
-                    scale = uniqueID.transform.localScale
-                };
-
-                // 4. Get asset reference (using placeholders for now)
-                // TODO: This logic will later be more intelligent.
-                objectData.assetSource = AssetSourceType.LocalFile; // Assuming it's a user-generated asset
-                objectData.assetReferenceKey = "primitive_cube"; // Placeholder key
-
-                // 5. Get component data (example with AudioSource)
-                if (uniqueID.TryGetComponent<AudioSource>(out AudioSource audioSource))
-                {
-                    objectData.hasAudioSource = true;
-                    objectData.audioSourceData = new AudioSourceData
-                    {
-                        isEnabled = audioSource.enabled,
-                        loop = audioSource.loop,
-                        volume = audioSource.volume,
-                        pitch = audioSource.pitch,
-                        spatialBlend = audioSource.spatialBlend,
-                        // TODO: The audio clip reference will also be dynamic later
-                        audioClipReference = "some_sound.wav"
-                    };
-                }
-                else
-                {
-                    objectData.hasAudioSource = false;
-                }
-
-                // 6. Add the populated object data to our level list
-                levelData.objectsInScene.Add(objectData);
+                objectData.parentGuid = parentUniqueID.GUID;
             }
 
-            // Easier debugging.
-            string json = JsonUtility.ToJson(levelData, true);
+            // --- 3. Get local transform data ---
+            objectData.transformData = new TransformData
+            {
+                position = currentGO.transform.localPosition,
+                rotation = currentGO.transform.localRotation,
+                scale = currentGO.transform.localScale
+            };
 
-            string directoryPath = Path.Combine(Application.persistentDataPath, "levels", levelName);
-            string filePath = Path.Combine(directoryPath, "level.json");
+            // --- 4. Handle Asset Reference (The intelligent logic) ---
+            if (currentGO.TryGetComponent<AssetSourceTracker>(out AssetSourceTracker tracker))
+            {
+                string finalAssetFilename = "";
 
-            Directory.CreateDirectory(directoryPath);
-            File.WriteAllText(filePath, json);
+                switch (tracker.sourceType)
+                {
+                    case AssetSourceType.LocalFile:
+                        finalAssetFilename = tracker.referenceKey;
+                        // TODO: Logic to copy the file if needed.
+                        break;
 
-            Debug.Log($"Level saved to: {filePath}");
-            Debug.Log($"Persistent Data Path is: {Application.persistentDataPath}");
+                    case AssetSourceType.Addressable:
+                        finalAssetFilename = $"{objectData.guid}.glb";
+                        string exportPath = Path.Combine(directoryPath, finalAssetFilename);
 
-            // TODO: Also save binary assets like .glb or .png files into the 'directoryPath'.
+
+                        var exportSettings = new ExportSettings { Format = GltfFormat.Binary }; 
+                        var exporter = new GameObjectExport(exportSettings);
+                        var success = await exporter.SaveToFileAndDispose(exportPath);
+
+                        if (!success) Debug.LogError($"Failed to export {currentGO.name} to GLB.");
+                        break;
+                }
+                objectData.assetReferenceKey = finalAssetFilename;
+            }
+            else
+            {
+                objectData.assetReferenceKey = "placeholder_cube.glb";
+                Debug.LogWarning($"Object '{currentGO.name}' has no AssetSourceTracker. Saving as placeholder.");
+            }
+
+            // --- 5. Get component data (example with AudioSource) ---
+            if (currentGO.TryGetComponent<AudioSource>(out AudioSource audioSource))
+            {
+                objectData.hasAudioSource = true;
+                objectData.audioSourceData = new AudioSourceData
+                {
+                    isEnabled = audioSource.enabled,
+                    loop = audioSource.loop,
+                    volume = audioSource.volume,
+                    pitch = audioSource.pitch,
+                    spatialBlend = audioSource.spatialBlend,
+                    // TODO: The audio clip reference also needs a tracker system.
+                    audioClipReference = "some_sound.wav"
+                };
+            }
+            else
+            {
+                objectData.hasAudioSource = false;
+            }
+
+            // --- 6. Add the populated object data to our level list ---
+            levelData.objectsInScene.Add(objectData);
         }
+
+        // --- Finalize and Write JSON ---
+        string filePath = Path.Combine(directoryPath, "level.json");
+        string json = JsonUtility.ToJson(levelData, true);
+        await File.WriteAllTextAsync(filePath, json);
+
+        Debug.Log($"Level '{levelName}' saved successfully to: {directoryPath}");
+    }
 
         /// <summary>
         /// Asynchronously loads a level from a persistent file and reconstructs the scene.
