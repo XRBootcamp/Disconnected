@@ -12,24 +12,39 @@ using System.Threading.Tasks;
 
 namespace Runware
 {
-    public class RunwareApiClient : IDisposable
+
+    public class RunwareApiClient : IApiClient, IDisposable
     {
-        private readonly HttpClient _httpClient;
-        private const string BaseUrl = "https://api.runware.ai/v1";
-        // TODO: add them here
-        private const string Text2ImageModels = "";
+        public readonly HttpClient _httpClient;
+        private readonly string apiKey;
+        public const string BaseUrlConst = "https://api.runware.ai/v1";
+        public string BaseUrl => BaseUrlConst;
+
+        /// <summary>
+        /// The HttpClient instance used for API requests.
+        /// </summary>
+        public HttpClient httpClient => _httpClient;
 
         public RunwareApiClient(string apiKey)
         {
+            this.apiKey = apiKey;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             _httpClient.DefaultRequestHeaders
                   .Accept
                   .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
-            _httpClient.BaseAddress = new Uri("http://example.com/");
-            
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(BaseUrl);
+            _httpClient.BaseAddress = new Uri(BaseUrlConst);
+        }
+
+        public Dictionary<string, string> ToCustomHeader()
+        {
+            var headers = new Dictionary<string, string>();
+            foreach (var header in httpClient.DefaultRequestHeaders)
+            {
+                headers[header.Key] = string.Join(";", header.Value);
+            }
+            headers.Add("Content-type", "application/json; charset=UTF-8");
+            return headers;
         }
 
         public void Dispose()

@@ -1,6 +1,8 @@
 using UnityEngine;
 using System;
 using System.IO;
+using UnityEngine.Networking;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Utility methods for image management, including base64 conversion, validation, and file operations.
@@ -34,7 +36,7 @@ public static class ImageManagementExtensions
     /// <param name="imagePath">The path to the image file.</param>
     /// <returns>The base64 encoded string of the image.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the image file is not found.</exception>
-    public static async System.Threading.Tasks.Task<string> ConvertImageToBase64(string imagePath)
+    public static async Task<string> ConvertImageToBase64(string imagePath)
     {
         if (!File.Exists(imagePath))
         {
@@ -51,33 +53,37 @@ public static class ImageManagementExtensions
     /// <param name="texture">The texture to save.</param>
     /// <param name="fileName">The file name (with or without extension).</param>
     /// <returns>The full path where the file was saved, or null if failed.</returns>
-    public static string WriteImageOnDisk(Texture2D texture, string fileName)
+    public static string WriteImageOnDisk(Texture2D texture, string fileName, ImageExtensions extension, FileEnumPath appPath = FileEnumPath.Temporary, string relativePath = null, bool appendDateTime = false)
     {
+        if (appPath == FileEnumPath.None)
+        {
+            Debug.LogWarning($"[{nameof(ImageManagementExtensions)}].WriteImageOnDisk WARNING - file enum path set to NONE - not saving image");
+        }
         if (texture == null)
         {
-            Debug.LogError("ImageManagementExtensions.WriteImageOnDisk ERROR - texture is null");
+            Debug.LogError($"[{nameof(ImageManagementExtensions)}].WriteImageOnDisk ERROR - texture is null");
             return null;
         }
 
         if (string.IsNullOrEmpty(fileName))
         {
-            Debug.LogError("ImageManagementExtensions.WriteImageOnDisk ERROR - fileName is null or empty");
+            Debug.LogError($"[{nameof(ImageManagementExtensions)}].WriteImageOnDisk ERROR - fileName is null or empty");
             return null;
         }
 
         try
         {
             byte[] textureBytes = texture.EncodeToPNG();
-            string fullFileName = fileName.EndsWith(".png") ? fileName : fileName + ".png";
-            string filePath = Path.Combine(Application.persistentDataPath, fullFileName);
-            
-            File.WriteAllBytes(filePath, textureBytes);
+
+            string filePath = FileManagementExtensions.GenerateFilePath(appPath, relativePath, fileName, extension.ToString().ToLower(), appendDateTime);
+            FileManagementExtensions.SaveInRootedDataPath(filePath, null, textureBytes);
+
             Debug.Log($"Image written to disk: {filePath}");
             return filePath;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"ImageManagementExtensions.WriteImageOnDisk ERROR - {ex.Message}");
+            Debug.LogError($"[{nameof(ImageManagementExtensions)}].WriteImageOnDisk ERROR - {ex.Message}");
             return null;
         }
     }
@@ -91,7 +97,7 @@ public static class ImageManagementExtensions
     {
         if (string.IsNullOrEmpty(base64String))
         {
-            Debug.LogError("ImageManagementExtensions.ConvertBase64ToTexture ERROR - base64String is null or empty");
+            Debug.LogError($"[{nameof(ImageManagementExtensions)}].ConvertBase64ToTexture ERROR - base64String is null or empty");
             return null;
         }
 
@@ -99,7 +105,7 @@ public static class ImageManagementExtensions
         {
             byte[] imageBytes = Convert.FromBase64String(base64String);
             Texture2D texture = new Texture2D(2, 2);
-            
+
             if (texture.LoadImage(imageBytes))
             {
                 Debug.Log("Successfully converted base64 to Texture2D");
@@ -107,14 +113,35 @@ public static class ImageManagementExtensions
             }
             else
             {
-                Debug.LogError("ImageManagementExtensions.ConvertBase64ToTexture ERROR - failed to load image data");
+                Debug.LogError($"[{nameof(ImageManagementExtensions)}].ConvertBase64ToTexture ERROR - failed to load image data");
                 return null;
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"ImageManagementExtensions.ConvertBase64ToTexture ERROR - {ex.Message}");
+            Debug.LogError($"[{nameof(ImageManagementExtensions)}].ConvertBase64ToTexture ERROR - {ex.Message}");
             return null;
         }
     }
-} 
+
+    public static async Task<Texture2D> GetRemoteTexture(string url)
+    {
+        using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(url))
+        {
+            var asyncOp = www.SendWebRequest();
+
+            while (asyncOp.isDone == false)
+                await Task.Delay(1000 / 30);//30 hertz
+
+            // read results:
+            if (www.isNetworkError || www.isHttpError)
+            {
+                return null;
+            }
+            else
+            {
+                return DownloadHandlerTexture.GetContent(www);
+            }
+        }
+    }
+}

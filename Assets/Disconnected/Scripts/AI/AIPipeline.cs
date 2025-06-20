@@ -4,23 +4,38 @@ using Unity.Collections;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Runware;
 
 public class AIPipeline : MonoBehaviour
 {
+    [Header("Text-to-Speech")]
     [SerializeField] private WhisperTranscriber text2SpeechAI;
 
+    // TODO: Speech-to-Text AI Assistant (conversational)
+
+    [Header("Speech-to-Text Voice Actors")]
     [SerializeField] private GameObject speech2TextAIPrefab;
     [SerializeField] private FileEnumPath storeSpeech2TextWavFiles = FileEnumPath.Persistent;
 
 
+    [Header("Text-to-Image")]
+    [SerializeField] private RunwareTTI text2ImageAI;
+
+
     [Header("Debug")]
     [SerializeField] private AIClientToggle aiClientToggle;
-    [SerializeField] private PlayAIVoice debugAIVoice;
 
     [Space]
     [SerializeField] private AudioClip micRecording;
     [SerializeField, TextArea(5,20)] private string currentSpeech;
+
+    [Space]
+    [SerializeField] private PlayAIVoice debugAIVoice;
     [SerializeField] private List<GroqTTS> listOfGeneratedGroqTTS;
+
+    [Space]
+    [SerializeField] private Texture2D lastGeneratedImage;
+
 
     
     private GroqTTS currentGroqTTS;
@@ -139,6 +154,32 @@ public class AIPipeline : MonoBehaviour
     #endregion
 
     #region TextToImage
+    [Button]
+    private void ConvertTextToImage()
+    {
+        if (AIClientFakes.TryHandleFakeTTI(aiClientToggle, SetLastGeneratedImage))
+        {
+            return;
+        }
+
+        CreateTextToImage(currentSpeech);
+    }
+
+    private void CreateTextToImage(string prompt)
+    {
+        text2ImageAI.GenerateTextToImage(
+            description: prompt, 
+            onCompleteAction: SetLastGeneratedImage, 
+            onErrorAction: null, 
+            alphaIsTransparency: true
+        );
+    }
+
+    private void SetLastGeneratedImage(Texture2D newImage)
+    {
+        lastGeneratedImage = newImage;
+    }
+
     #endregion
 
     #region ImageTo3D

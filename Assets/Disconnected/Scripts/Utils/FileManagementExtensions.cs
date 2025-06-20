@@ -32,12 +32,12 @@ public static class FileManagementExtensions
             Debug.LogError("FileManagementExtensions.GenerateFilePath ERROR - basePath or fileName is null or empty");
             return null;
         }
-        string name = fileName;
+        string name = $"{fileName}.{extension}";
         if (appendDateTime)
         {
             string timeOfCreation = DateTime.Now.ToString("yyyyMMdd-HHmmss");
             string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-            name = $"{nameWithoutExt}_{timeOfCreation}{extension}";
+            name = $"{nameWithoutExt}_{timeOfCreation}.{extension}";
         }
         string fullPath = string.IsNullOrEmpty(relativePath)
             ? Path.Combine(basePath, name)
@@ -92,14 +92,14 @@ public static class FileManagementExtensions
     /// <returns>The full file path, or null if failed.</returns>
     public static string SaveInRootedDataPath(string rootPath, string relativePath, byte[] data)
     {
-        if (string.IsNullOrEmpty(rootPath) || string.IsNullOrEmpty(relativePath) || data == null)
+        if (string.IsNullOrEmpty(rootPath) || data == null)
         {
             Debug.LogError("FileManagementExtensions.SaveInRootedDataPath ERROR - invalid arguments");
             return null;
         }
         try
         {
-            string fullPath = Path.Combine(rootPath, relativePath);
+            string fullPath = string.IsNullOrEmpty(relativePath) ? rootPath : Path.Combine(rootPath, relativePath);
             string dir = Path.GetDirectoryName(fullPath);
             if (!Directory.Exists(dir))
             {

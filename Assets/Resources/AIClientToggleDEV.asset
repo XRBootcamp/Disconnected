@@ -12,17 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7f36b64996a75f45b6f3dca49835e06, type: 3}
   m_Name: AIClientToggleDEV
   m_EditorClassIdentifier: 
-  IsRecorderOn: 1
+  IsRecorderOn: 0
   fakeMicRecordings:
   - {fileID: 8300000, guid: 42b00473a999f0f4cb1f9d99ad168a02, type: 3}
-  IsSTTOn: 1
+  IsSTTOn: 0
   sttFakeOutputs:
   - {fileID: 4900000, guid: 943b238c6811bba4c94cd235e21ec2ca, type: 3}
-  IsTTSOn: 1
+  IsTTSOn: 0
   ttsFakeOutputs:
   - {fileID: 8300000, guid: 8b2255ffba6ac644286663bb68c34201, type: 3}
   IsTTIOn: 1
-  ttiFakeOutputs: []
+  ttiFakeOutputs:
+  - {fileID: 2800000, guid: 938abfd950d2ec84baacc4c298761723, type: 3}
+  - {fileID: 2800000, guid: 7ce83407703fc6044acae794887f6938, type: 3}
+  - {fileID: 2800000, guid: c8ab5fc288a32f24589b5668708ec2f4, type: 3}
   IsImgTo3dOn: 1
   it3dFakeOutputs: []
   IsReasoningOn: 1
