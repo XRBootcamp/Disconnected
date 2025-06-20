@@ -9,5 +9,6 @@ public class APIKeyConfig : ScriptableObject
     [Header("Groq")]
     public string groqKey;
 
-    
+    [Header("Runware - Text2Image")]
+    public string runwareKey;
 }
