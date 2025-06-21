@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7f36b64996a75f45b6f3dca49835e06, type: 3}
   m_Name: AIClientToggleDEV
   m_EditorClassIdentifier: 
-  IsRecorderOn: 0
+  IsRecorderOn: 1
   fakeMicRecordings:
   - {fileID: 8300000, guid: 42b00473a999f0f4cb1f9d99ad168a02, type: 3}
-  IsSTTOn: 0
+  IsSTTOn: 1
   sttFakeOutputs:
   - {fileID: 4900000, guid: 943b238c6811bba4c94cd235e21ec2ca, type: 3}
-  IsTTSOn: 0
+  IsTTSOn: 1
   ttsFakeOutputs:
   - {fileID: 8300000, guid: 8b2255ffba6ac644286663bb68c34201, type: 3}
   IsTTIOn: 1
