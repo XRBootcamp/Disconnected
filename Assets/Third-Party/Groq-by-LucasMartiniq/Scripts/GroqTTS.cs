@@ -42,14 +42,20 @@ public class GroqTTS : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
 
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
-    
+
     private const string model = "playai-tts";
     [SerializeField] private PlayAIVoice selectedVoice = PlayAIVoice.Fritz_PlayAI;
+    // Add a virtual property
+    protected virtual PlayAIVoice SelectedVoice
+    {
+        get => selectedVoice;
+        set => selectedVoice = value;
+    }
     private const string responseFormat = "wav";
     [SerializeField] private string prompt = "I love building and shipping new features for our students!";
 
 
-    public bool IsGenerated {get; private set;}
+    public bool IsGenerated { get; private set; }
 
     [Button]
     private async void Generate()
@@ -70,7 +76,7 @@ public class GroqTTS : MonoBehaviour
             return;
         }
 
-        var json = $"{{\"model\":\"{model}\",\"voice\":\"{GetVoiceName(selectedVoice)}\",\"input\":\"{text}\",\"response_format\":\"{responseFormat}\"}}";
+        var json = $"{{\"model\":\"{model}\",\"voice\":\"{GetVoiceName(SelectedVoice)}\",\"input\":\"{text}\",\"response_format\":\"{responseFormat}\"}}";
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         try
@@ -162,7 +168,7 @@ public class GroqTTS : MonoBehaviour
 
     public void SetVoice(PlayAIVoice newVoice)
     {
-        selectedVoice = newVoice;
+        SelectedVoice = newVoice;
     }
 
     public void SetPrompt(string newPrompt)
