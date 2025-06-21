@@ -2,10 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+// NOTE: JsonSerializer.Serialize either requires: all values {get ; set; }, or the attribute [JsonInclude] in every field that is to be included in the Serialize
 namespace Runware
 {
     public enum OutputType
@@ -32,25 +34,26 @@ namespace Runware
 
     [Serializable]
     // NOTE: according to documentation: https://runware.ai/docs/en/getting-started/how-to-connect
+
     public class TextToImageRequestModel
     {
-        public string taskType = "imageInference";
-        public string taskUUID;
-        public string positivePrompt;
-        public string model;
-        public string outputType;
-        public string outputFormat;
-        public int height;
-        public int width;
-        public int numberResults; // default: 1
-        public bool? includeCost = true; // set as default so we always know
+        [JsonInclude] public string taskType = "imageInference";
+        [JsonInclude] public string taskUUID;
+        [JsonInclude] public string positivePrompt;
+        [JsonInclude] public string model;
+        [JsonInclude] public string outputType;
+        [JsonInclude] public string outputFormat;
+        [JsonInclude] public int height;
+        [JsonInclude] public int width;
+        [JsonInclude] public int numberResults; // default: 1
+        [JsonInclude] public bool? includeCost = true; // set as default so we always know
 
-        public bool? checkNSFW;
+        [JsonInclude] public bool? checkNSFW;
         
-        [CanBeNull] public string negativePrompt;
+        [CanBeNull] [JsonInclude] public string negativePrompt;
 
-        public int? steps; // default: recommended by model, if none - whatever runware defines as default
-        public double? CFGScale; // default: recommended by model, if none - whatever runware defines as default
+        [JsonInclude] public int? steps; // default: recommended by model, if none - whatever runware defines as default
+        [JsonInclude] public double? CFGScale; // default: recommended by model, if none - whatever runware defines as default
 
         public TextToImageRequestModel(
             string prompt,
@@ -140,38 +143,38 @@ namespace Runware
     [Serializable]
     public class TextToImageResponseDataArrayModel
     {
-        public List<TextToImageResponseModel> data;
+        [JsonInclude] public List<TextToImageResponseModel> data;
     }
 
     [Serializable]
     public class TextToImageResponseModel
     {
-        public string taskType;
-        public string imageUUID;
-        public string taskUUID;
-        public double cost;
-        public long seed;
-        public string imageURL;
-        public string imageBase64Data;
-        public string positivePrompt;
-        public bool? NSFWContent;
+        [JsonInclude] public string taskType;
+        [JsonInclude] public string imageUUID;
+        [JsonInclude] public string taskUUID;
+        [JsonInclude] public double cost;
+        [JsonInclude] public long seed;
+        [JsonInclude] public string imageURL;
+        [JsonInclude] public string imageBase64Data;
+        [JsonInclude] public string positivePrompt;
+        [JsonInclude] public bool? NSFWContent;
     }
 
 
     [Serializable]
     public class ErrorResponseArrayModel
     {
-        public List<ErrorResponseModel> errors;
+        [JsonInclude] public List<ErrorResponseModel> errors;
     }
 
     [Serializable]
     public class ErrorResponseModel
     {
-        public string code;
-        public string message;
-        public string parameter;
-        public string type;
-        public string taskType;
+        [JsonInclude] public string code;
+        [JsonInclude] public string message;
+        [JsonInclude] public string parameter;
+        [JsonInclude] public string type;
+        [JsonInclude] public string taskType;
     }
 
 }

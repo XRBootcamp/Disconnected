@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Runware;
+using System.Linq;
 
 public class AIPipeline : MonoBehaviour
 {
@@ -155,20 +156,21 @@ public class AIPipeline : MonoBehaviour
 
     #region TextToImage
     [Button]
-    private void ConvertTextToImage()
+    private async Task ConvertTextToImage()
     {
         if (AIClientFakes.TryHandleFakeTTI(aiClientToggle, SetLastGeneratedImage))
         {
             return;
         }
 
-        CreateTextToImage(currentSpeech);
+        await CreateTextToImage(currentSpeech);
     }
 
-    private void CreateTextToImage(string prompt)
+    private async Task CreateTextToImage(string prompt)
     {
-        text2ImageAI.GenerateTextToImage(
+        await text2ImageAI.GenerateTextToImage(
             description: prompt, 
+            onStartAction: null,
             onCompleteAction: SetLastGeneratedImage, 
             onErrorAction: null, 
             alphaIsTransparency: true
@@ -178,6 +180,11 @@ public class AIPipeline : MonoBehaviour
     private void SetLastGeneratedImage(Texture2D newImage)
     {
         lastGeneratedImage = newImage;
+    }
+
+    private void SetLastGeneratedImage(List<Texture2D> newImages)
+    {
+        lastGeneratedImage = newImages.FirstOrDefault();
     }
 
     #endregion
