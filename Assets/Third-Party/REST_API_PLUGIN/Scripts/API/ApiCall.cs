@@ -46,7 +46,6 @@ namespace REST_API_HANDLER {
             });
         }
 
-
         public void PostRequest<RESULT>(string url, Dictionary<string, string> headers, WWWForm form, string jsonParams, Action<RESULT> success, Action<string> error, string jsonPrefix = null)
         {
             client.PostAsync(url, jsonPrefix, jsonParams, headers, form, (result) =>
@@ -117,6 +116,46 @@ namespace REST_API_HANDLER {
                     error.Invoke(result.error);
                 }
             });
+        }
+
+        /// <summary>
+        /// Posts a request using an IApiClient, automatically extracting headers and base URL.
+        /// </summary>
+        public void PostRequest<RESULT>(IApiClient apiClient, string endpoint, WWWForm form, string jsonParams, Action<RESULT> success, Action<string> error, string jsonPrefix = null)
+        {
+            string fullUrl = apiClient.BaseUrl.TrimEnd('/') + "/" + endpoint.TrimStart('/');
+            var headers = apiClient.ToCustomHeader();
+            PostRequest(fullUrl, headers, form, jsonParams, success, error, jsonPrefix);
+        }
+
+        /// <summary>
+        /// Gets a request using an IApiClient, automatically extracting headers and base URL.
+        /// </summary>
+        public void GetRequest<RESULT>(IApiClient apiClient, string endpoint, Action<RESULT> success, Action<string> error, string jsonPrefix = null)
+        {
+            string fullUrl = apiClient.BaseUrl.TrimEnd('/') + "/" + endpoint.TrimStart('/');
+            var headers = apiClient.ToCustomHeader();
+            GetRequest(fullUrl, headers, success, error, jsonPrefix);
+        }
+
+        /// <summary>
+        /// Puts a request using an IApiClient, automatically extracting headers and base URL.
+        /// </summary>
+        public void PutRequest<RESULT>(IApiClient apiClient, string endpoint, WWWForm form, string jsonParams, Action<RESULT> success, Action<string> error, string jsonPrefix = null)
+        {
+            string fullUrl = apiClient.BaseUrl.TrimEnd('/') + "/" + endpoint.TrimStart('/');
+            var headers = apiClient.ToCustomHeader();
+            PutRequest(fullUrl, headers, form, jsonParams, success, error, jsonPrefix);
+        }
+
+        /// <summary>
+        /// Deletes a request using an IApiClient, automatically extracting headers and base URL.
+        /// </summary>
+        public void DeleteRequest<RESULT>(IApiClient apiClient, string endpoint, Action<RESULT> success, Action<string> error, string jsonPrefix = null)
+        {
+            string fullUrl = apiClient.BaseUrl.TrimEnd('/') + "/" + endpoint.TrimStart('/');
+            var headers = apiClient.ToCustomHeader();
+            DeleteRequest(fullUrl, headers, success, error, jsonPrefix);
         }
     }
 

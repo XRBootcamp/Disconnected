@@ -22,7 +22,10 @@ MonoBehaviour:
   ttsFakeOutputs:
   - {fileID: 8300000, guid: 8b2255ffba6ac644286663bb68c34201, type: 3}
   IsTTIOn: 1
-  ttiFakeOutputs: []
+  ttiFakeOutputs:
+  - {fileID: 2800000, guid: 938abfd950d2ec84baacc4c298761723, type: 3}
+  - {fileID: 2800000, guid: 7ce83407703fc6044acae794887f6938, type: 3}
+  - {fileID: 2800000, guid: c8ab5fc288a32f24589b5668708ec2f4, type: 3}
   IsImgTo3dOn: 1
   it3dFakeOutputs: []
   IsReasoningOn: 1
