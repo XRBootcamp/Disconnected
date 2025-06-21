@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9042179045779836382}
-  - component: {fileID: 9152034477743065668}
+  - component: {fileID: 4175403361328693163}
   - component: {fileID: 3264162873950143580}
   m_Layer: 0
   m_Name: TTS-Voice
@@ -65,7 +65,7 @@ Transform:
   - {fileID: 8735547040566607199}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &9152034477743065668
+--- !u!114 &4175403361328693163
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -74,12 +74,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1469613166775821550}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c84cbf2d36122241a67aa267d7b35bc, type: 3}
+  m_Script: {fileID: 11500000, guid: a84aca99d6525de41bb044f0da62254e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  storeGeneratedWavFiles: 0
   audioSource: {fileID: 3264162873950143580}
-  selectedVoice: 0
+  selectedVoice: 14
   prompt: I love building and shipping new features for our students!
+  filteredSelectedVoice: 14
 --- !u!82 &3264162873950143580
 AudioSource:
   m_ObjectHideFlags: 0

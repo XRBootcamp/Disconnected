@@ -31,7 +31,9 @@ public class AIPipeline : MonoBehaviour
     [SerializeField, TextArea(5,20)] private string currentSpeech;
 
     [Space]
-    [SerializeField] private PlayAIVoice debugAIVoice;
+    // TO simulate that the conversation AI has been taken
+    [SerializeField][ExcludeReserved] private PlayAIVoice debugAIVoice;
+    //[SerializeField] private PlayAIVoice debugAIVoice;
     [SerializeField] private List<GroqTTS> listOfGeneratedGroqTTS;
 
     [Space]
