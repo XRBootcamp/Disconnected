@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 // NOTE: JsonSerializer.Serialize either requires: all values {get ; set; }, or the attribute [JsonInclude] in every field that is to be included in the Serialize
 namespace Runware
 {
+
     public enum OutputType
     {
         URL = 0,
@@ -34,7 +35,6 @@ namespace Runware
 
     [Serializable]
     // NOTE: according to documentation: https://runware.ai/docs/en/getting-started/how-to-connect
-
     public class TextToImageRequestModel
     {
         [JsonInclude] public string taskType = "imageInference";
@@ -46,11 +46,12 @@ namespace Runware
         [JsonInclude] public int height;
         [JsonInclude] public int width;
         [JsonInclude] public int numberResults; // default: 1
+        [JsonInclude] public TextToImageRequestAdvancedFeatures advancedFeatures;
         [JsonInclude] public bool? includeCost = true; // set as default so we always know
 
         [JsonInclude] public bool? checkNSFW;
-        
-        [CanBeNull] [JsonInclude] public string negativePrompt;
+
+        [CanBeNull][JsonInclude] public string negativePrompt;
 
         [JsonInclude] public int? steps; // default: recommended by model, if none - whatever runware defines as default
         [JsonInclude] public double? CFGScale; // default: recommended by model, if none - whatever runware defines as default
@@ -60,6 +61,7 @@ namespace Runware
             TextToImageAIModel model,
             OutputType type,
             ImageExtensions format,
+            bool alphaIsTransparency,
             int height = 1024,
             int width = 1024,
             int numberResults = 1,
@@ -78,6 +80,13 @@ namespace Runware
             this.height = RunwareExtensions.ValidateDivisibleBy64(height);
             this.width = RunwareExtensions.ValidateDivisibleBy64(width);
             this.numberResults = numberResults;
+
+            // We want transparency supported only if we set transparency, and model supports it
+            if (alphaIsTransparency && model.SupportsTransparency())
+            {
+                this.advancedFeatures = new TextToImageRequestAdvancedFeatures();
+                this.advancedFeatures.layerDiffuse = true;
+            }
 
             if (model.SupportsNegativePrompt())
             {
@@ -112,6 +121,8 @@ namespace Runware
             {
                 this.CFGScale = defaultModelCFGScale;
             }
+
+
         }
 
         /// <summary>
@@ -138,6 +149,21 @@ namespace Runware
         }
     }
 
+
+    // TODO: if alpha is enabled, add this to TextToImageRequestModel
+    // https://runware.ai/docs/en/image-inference/api-reference#request-advancedfeatures
+    /**
+     *  "advancedFeatures": {
+            "layerDiffuse": true
+        },
+     * 
+     */
+
+    [Serializable]
+    public class TextToImageRequestAdvancedFeatures
+    {
+        [JsonInclude] public bool layerDiffuse;
+    }
 
 
     [Serializable]
