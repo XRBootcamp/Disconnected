@@ -44,6 +44,23 @@ namespace Disconnected.Scripts.Core
 
             _ = SaveLevelAsync(levelName);
         }
+        
+        [Button]
+        [GUIColor(0.2f, 1f, 0.5f)] 
+        public void UploadLevelToCloud(string levelName)
+        {
+            // Primero, verifica que el CloudManager exista en la escena.
+            if (CloudManager.instance == null)
+            {
+                Debug.LogError("CloudManager instance not found in the scene. Cannot upload.");
+                return;
+            }
+
+            // Llama al método público de subida del CloudManager.
+            Debug.Log($"[Odin Button] Triggering cloud upload for level: {levelName}");
+            CloudManager.instance.UploadLevel(levelName);
+        }
+        
 
 
     /// <summary>
@@ -165,13 +182,7 @@ namespace Disconnected.Scripts.Core
 
         Debug.Log($"Level '{levelName}' saved successfully to: {directoryPath}");
     }
-
-        [Button]
-    [GUIColor(0.4f, 0.8f, 1f)]
-    public void LoadLevelFromEditor(string levelName)
-    {
-        _ = LoadLevelAsync(levelName);
-    }
+    
     
     /// <summary>
     /// Asynchronously loads a level from a persistent file and reconstructs the scene.
