@@ -803,6 +803,7 @@ GameObject:
   m_Component:
   - component: {fileID: 693191778}
   - component: {fileID: 693191779}
+  - component: {fileID: 693191780}
   m_Layer: 0
   m_Name: ----------- PIPELINE ---------
   m_TagString: Untagged
@@ -837,16 +838,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e904861453e748548b89e882314b596c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  text2SpeechAI: {fileID: 1411714651}
-  speech2TextAIPrefab: {fileID: 1469613166775821550, guid: ea32a5f83742bfd4f868bd13d90e68c7, type: 3}
-  storeSpeech2TextWavFiles: 2
+  micRecorder: {fileID: 693191780}
+  speech2TextAI: {fileID: 1411714651}
+  text2SpeechAIPrefab: {fileID: 1469613166775821550, guid: ea32a5f83742bfd4f868bd13d90e68c7, type: 3}
+  storetext2SpeechWavFiles: 2
   text2ImageAI: {fileID: 1741711480}
   aiClientToggle: {fileID: 11400000, guid: 82d2019f83f520c47885510c15d4af47, type: 2}
   micRecording: {fileID: 0}
   currentSpeech: 
-  debugAIVoice: 0
+  debugAIVoice: 1
   listOfGeneratedGroqTTS: []
   lastGeneratedImage: {fileID: 0}
+--- !u!114 &693191780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 693191777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 031588bf656b2854397672ccadc647d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  duration: 30
+  sampleRate: 44100
+  onRecordedAudio:
+    m_PersistentCalls:
+      m_Calls: []
+  onDurationPassed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &740432908
 GameObject:
   m_ObjectHideFlags: 0
@@ -1272,7 +1294,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1172345323}
-  - component: {fileID: 1172345322}
+  - component: {fileID: 1172345324}
   m_Layer: 0
   m_Name: GlobalMicRecorder
   m_TagString: Untagged
@@ -1280,20 +1302,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1172345322
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1172345321}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfe45d8b06f0e37438931e7af05de1b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  duration: 30
-  sampleRate: 44100
 --- !u!4 &1172345323
 Transform:
   m_ObjectHideFlags: 0
@@ -1309,6 +1317,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1172345324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1172345321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9564ea68a9df1294aa32920a13b65e79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isAnyRecording: 0
+  currentRecordingRecorder: {fileID: 0}
+  onRecordingStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onRecordingStopped:
+    m_PersistentCalls:
+      m_Calls: []
+  onRecordingBlocked:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1195649100
 GameObject:
   m_ObjectHideFlags: 0
@@ -1701,7 +1732,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   whisperEndpoint: https://api.groq.com/openai/v1/audio/transcriptions
-  recorder: {fileID: 1172345322}
 --- !u!4 &1411714653
 Transform:
   m_ObjectHideFlags: 0

@@ -12,4 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7c8b4bf20bfa054a9b5ea40717c5f0f, type: 3}
   m_Name: EnumReservationRegistry
   m_EditorClassIdentifier: 
-  reservations: []
+  reservations:
+  - reservedBy: LockedAIVoices
+    enumTypeName: PlayAIVoice
+    enumValue: 0
+    enumValueName: Aaliyah_PlayAI

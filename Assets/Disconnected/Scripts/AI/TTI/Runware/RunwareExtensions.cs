@@ -104,7 +104,7 @@ namespace Runware
             // FLUX models support transparency right from image generation
             return model switch
             {
-                TextToImageAIModel.Flux1Schnell => true,
+                TextToImageAIModel.Flux1Schnell => false,
                 TextToImageAIModel.Flux1Dev => true,
                 _ => false
             };

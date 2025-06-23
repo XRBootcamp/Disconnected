@@ -1,4 +1,5 @@
 
+using Runware;
 using UnityEngine;
 
 /// <summary>
@@ -9,6 +10,9 @@ public class AIGameSettings : ScriptableObject
 {
     [Header("AI Assistant Settings")]
     public PlayAIVoice aiAssistantVoice = PlayAIVoice.Angelo_PlayAI;
+    public TextToImageAIModel textToImageAIModelName;
+    public string aiReasoningModel = "qwen/qwen3-32b";
+
     
     [Header("Registry Reference")]
     public EnumReservationRegistry reservationRegistry;
