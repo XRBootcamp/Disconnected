@@ -1,0 +1,22 @@
+{
+    "name": "Disconnected.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a42927d1d4a3b4cda9b076a7adecb9cc",
+        "GUID:5e7ba8d6d26c84943b64dd07bd1c9510",
+        "GUID:69448af7b92c7f342b298e06a37122aa",
+        "GUID:3b4d8e09c665bfa47849130d8695171e",
+        "GUID:f1ca58b51fe5943558636f30362c67d0"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
