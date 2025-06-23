@@ -45,7 +45,7 @@ namespace Disconnected.Scripts.Core
             _ = SaveLevelAsync(levelName);
         }
         
-        [Button]
+        /*[Button]
         [GUIColor(0.2f, 1f, 0.5f)] 
         public void UploadLevelToCloud(string levelName)
         {
@@ -60,7 +60,7 @@ namespace Disconnected.Scripts.Core
             Debug.Log($"[Odin Button] Triggering cloud upload for level: {levelName}");
             CloudManager.instance.UploadLevel(levelName);
         }
-        
+        */
 
 
     /// <summary>

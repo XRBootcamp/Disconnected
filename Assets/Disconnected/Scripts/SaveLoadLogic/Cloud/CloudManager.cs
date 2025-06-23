@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
-using System.Collections.Generic; 
+using System.Collections.Generic;
 using System.IO;
 using Disconnected.Scripts.DataSchema; 
+using Sirenix.OdinInspector; 
 
-namespace Disconnected.Scripts.Core 
+namespace Disconnected.Scripts.Core
 {
     public class CloudManager : MonoBehaviour
     {
@@ -14,18 +15,24 @@ namespace Disconnected.Scripts.Core
 
         private void Awake()
         {
-            if (instance != null && instance != this)
-            {
-                Destroy(gameObject);
-            }
-            else
-            {
-                instance = this;
-            }
+            if (instance != null && instance != this) { Destroy(gameObject); }
+            else { instance = this; }
+        }
+        
+        private string uploadUrl = "https://uploadfile-c4piqdcjga-uc.a.run.app";
+        private string getLevelsListUrl = "https://getlevelslist-c4piqdcjga-uc.a.run.app";
+        
+        private string storageBaseUrl = "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0125077051.firebasestorage.app/o/";
+
+
+        [Button]
+        [GUIColor(1f, 0.6f, 0.4f)]
+        public void UploadLevelEditor(string levelName)
+        {
+            StartCoroutine(UploadLevelRoutine(levelName));
         }
 
-        private string uploadUrl = "https://uploadfile-c4piqdcjga-uc.a.run.app";
-
+        
         /// <summary>
         /// Inicia el proceso de subida para un nivel completo.
         /// </summary>
@@ -46,7 +53,7 @@ namespace Disconnected.Scripts.Core
                 yield break;
             }
 
-xs            string jsonContent = File.ReadAllText(jsonPath);
+            string jsonContent = File.ReadAllText(jsonPath);
             LevelData levelData = JsonUtility.FromJson<LevelData>(jsonContent);
 
             // Creamos una lista de todos los archivos que necesitamos subir
@@ -88,7 +95,6 @@ xs            string jsonContent = File.ReadAllText(jsonPath);
 
             byte[] fileData = File.ReadAllBytes(localPath);
 
-            // --- INICIO DE LA LÓGICA CORREGIDA ---
 
             // 1. Creamos un formulario con múltiples partes.
             List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
@@ -104,7 +110,6 @@ xs            string jsonContent = File.ReadAllText(jsonPath);
             // 4. Todavía podemos añadir nuestra cabecera personalizada para decirle a la Cloud Function dónde guardarlo.
             www.SetRequestHeader("x-destination-path", cloudPath);
 
-            // --- FIN DE LA LÓGICA CORREGIDA ---
 
             Debug.Log($"[Cloud] Uploading {localPath} to {cloudPath}...");
             yield return www.SendWebRequest();
@@ -116,6 +121,89 @@ xs            string jsonContent = File.ReadAllText(jsonPath);
             else
             {
                 Debug.Log($"[Cloud] File uploaded successfully: {www.downloadHandler.text}");
+            }
+        }
+        
+        [Button]
+        [GUIColor(0.4f, 1f, 0.8f)]
+        public void DownloadAndLoadLevel(string levelName)
+        {
+            StartCoroutine(DownloadLevelRoutine(levelName));
+        }
+
+        private IEnumerator DownloadLevelRoutine(string levelName)
+        {
+            Debug.Log($"[Cloud Download] Starting download process for level '{levelName}'...");
+
+            // Paso 1: Crear la carpeta local donde guardaremos los archivos descargados.
+            string localLevelPath = Path.Combine(Application.persistentDataPath, "levels", levelName);
+            Directory.CreateDirectory(localLevelPath);
+
+            // Paso 2: Descargar el archivo level.json primero para saber qué más necesitamos.
+            string jsonCloudPath = $"levels/{levelName}/level.json";
+            string localJsonPath = Path.Combine(localLevelPath, "level.json");
+            yield return StartCoroutine(DownloadFileFromCloud(jsonCloudPath, localJsonPath));
+
+            if (!File.Exists(localJsonPath))
+            {
+                Debug.LogError("[Cloud Download] Failed to download level.json. Aborting.");
+                yield break;
+            }
+
+            // Paso 3: Leer el JSON para obtener la lista de otros assets.
+            string jsonContent = File.ReadAllText(localJsonPath);
+            LevelData levelData = JsonUtility.FromJson<LevelData>(jsonContent);
+            
+            List<string> assetsToDownload = new List<string>();
+            foreach (var objectData in levelData.objectsInScene)
+            {
+                if (!string.IsNullOrEmpty(objectData.assetReferenceKey) && !assetsToDownload.Contains(objectData.assetReferenceKey))
+                {
+                    assetsToDownload.Add(objectData.assetReferenceKey);
+                }
+            }
+
+            // Paso 4: Descargar cada asset de la lista.
+            Debug.Log($"[Cloud Download] Found {assetsToDownload.Count} assets to download.");
+            foreach (string assetName in assetsToDownload)
+            {
+                string assetCloudPath = $"levels/{levelName}/{assetName}";
+                string localAssetPath = Path.Combine(localLevelPath, assetName);
+                yield return StartCoroutine(DownloadFileFromCloud(assetCloudPath, localAssetPath));
+            }
+            
+            // Paso 5: ¡Todo está descargado! Ahora usamos nuestro SaveSystem para cargarlo.
+            Debug.Log("[Cloud Download] All files downloaded. Triggering local load system...");
+            if (SaveSystem.instance != null)
+            {
+                // Reutilizamos toda la lógica de carga que ya construimos y probamos.
+                _ = SaveSystem.instance.LoadLevelAsync(levelName);
+            }
+            else
+            {
+                Debug.LogError("SaveSystem instance not found! Cannot load the downloaded level.");
+            }
+        }
+        
+        private IEnumerator DownloadFileFromCloud(string cloudPath, string localDestinationPath)
+        {
+
+            string publicUrl = storageBaseUrl + WWW.EscapeURL(cloudPath) + "?alt=media";
+
+            Debug.Log($"[Cloud Download] Downloading from: {publicUrl}");
+            
+            UnityWebRequest www = UnityWebRequest.Get(publicUrl);
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"[Cloud Download] Failed to download {cloudPath}: {www.error}");
+            }
+            else
+            {
+                // Guardar el archivo descargado en el disco.
+                File.WriteAllBytes(localDestinationPath, www.downloadHandler.data);
+                Debug.Log($"[Cloud Download] Successfully downloaded and saved to {localDestinationPath}");
             }
         }
     }
