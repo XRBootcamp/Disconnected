@@ -22,11 +22,8 @@ namespace Runware
         public int height = 1024;
         public int width = 1024;
         public int numberResults = 1;
-        public async Task GenerateTextToImage(string description, Action onStartAction, Action<List<Texture2D>> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction, bool alphaIsTransparency,
-            OutputType outputType = OutputType.base64Data, ImageExtensions outputFormat = ImageExtensions.PNG,
-            ImageShape imageShape = ImageShape.Square, int numberResults = 1,
-            string negativePrompt = null, bool? isNSFW = null, int? overwriteDefaultSteps = null,
-            double? overwriteDefaultCFGScale = null)
+
+        public async Task GenerateTextToImage(TextToImageRequestModel request, Action onStartAction, Action<List<Texture2D>> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction)
         {
             var apiKeyLoader = APIKeyLoader.Instance;
             if (apiKeyLoader == null)
@@ -34,34 +31,8 @@ namespace Runware
                 Debug.LogError("APIKeyLoader instance not found!");
                 return;
             }
-
             try
             {
-                // default values - ignore
-                if (overwriteDefaultSteps == 20)
-                {
-                    overwriteDefaultSteps = null;
-                }
-                if (overwriteDefaultCFGScale == 7)
-                {
-                    overwriteDefaultCFGScale = null;
-                }
-                
-                var imageDimensions = imageShape.GetDimensions();
-                TextToImageRequestModel reqModel = new(
-                    prompt: description,
-                    model: model,
-                    type: outputType,
-                    format: outputFormat,
-                    alphaIsTransparency: alphaIsTransparency,
-                    height: imageDimensions.height,
-                    width: imageDimensions.width,
-                    numberResults: numberResults,
-                    negativePrompt: negativePrompt,
-                    isNSFW: isNSFW,
-                    overwriteDefaultSteps: overwriteDefaultSteps,
-                    overwriteDefaultCFGScale: overwriteDefaultCFGScale
-                );
 
                 // NOTE: Connect UI events here - like loading screen
                 if (onStartAction != null)
@@ -69,8 +40,9 @@ namespace Runware
                     onStartAction.Invoke();
                 }
 
-                var result = await apiKeyLoader.RunwareApi.CreateTextToImageAsync(new List<TextToImageRequestModel> { reqModel });
+                var result = await apiKeyLoader.RunwareApi.CreateTextToImageAsync(new List<TextToImageRequestModel> { request });
 
+                bool alphaIsTransparency = request.advancedFeatures?.layerDiffuse ?? false;
                 var textures = await LoadTextures(result.data, alphaIsTransparency);
 
                 // NOTE: Connect UI events after completion
@@ -92,6 +64,49 @@ namespace Runware
                 }
                 Debug.LogError($"[{nameof(RunwareTTI)}] - GenerateTextToImage ERROR\n{e.Message}");
             }
+    
+            
+        }
+        public async Task GenerateTextToImage(string description, Action onStartAction, Action<List<Texture2D>> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction, bool alphaIsTransparency,
+            OutputType outputType = OutputType.base64Data, ImageExtensions outputFormat = ImageExtensions.PNG,
+            ImageShape imageShape = ImageShape.Square, int numberResults = 1,
+            string negativePrompt = null, bool? isNSFW = null, int? overwriteDefaultSteps = null,
+            double? overwriteDefaultCFGScale = null)
+        {
+            // default values - ignore
+            if (overwriteDefaultSteps == 20)
+            {
+                overwriteDefaultSteps = null;
+            }
+            if (overwriteDefaultCFGScale == 7)
+            {
+                overwriteDefaultCFGScale = null;
+            }
+            
+            var imageDimensions = imageShape.GetDimensions();
+            
+            TextToImageRequestModel request = new(
+                prompt: description,
+                model: model,
+                type: outputType,
+                format: outputFormat,
+                alphaIsTransparency: alphaIsTransparency,
+                height: imageDimensions.height,
+                width: imageDimensions.width,
+                numberResults: numberResults,
+                negativePrompt: negativePrompt,
+                isNSFW: isNSFW,
+                overwriteDefaultSteps: overwriteDefaultSteps,
+                overwriteDefaultCFGScale: overwriteDefaultCFGScale
+            );
+
+            await GenerateTextToImage(
+                request: request,
+                onStartAction: onStartAction,
+                onCompleteAction: onCompleteAction,
+                onErrorAction: onErrorAction
+            );
+
         }
 
         async Task<List<Texture2D>> LoadTextures(List<TextToImageResponseModel> urls, bool alphaIsTransparency)

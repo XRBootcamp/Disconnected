@@ -9,6 +9,26 @@ namespace Runware
 
     public static class RunwareExtensions
     {
+        public static TextToImageAIModel? ToTextToImageAIModel(this string modelStr)
+        {
+            return modelStr switch
+            {
+                "Flux1Schnell" => TextToImageAIModel.Flux1Schnell,
+                "Flux1Dev" => TextToImageAIModel.Flux1Dev,
+                _ => null
+            };
+        }
+
+        public static ImageToImageAIModel? ToImageToImageAIModel(this string modelStr)
+        {
+            return modelStr switch
+            {
+                "Flux1KontextPro" => ImageToImageAIModel.Flux1KontextPro,
+                "FluxDevRedux" => ImageToImageAIModel.FluxDevRedux,
+                _ => null
+            };
+        }
+
         // Overloads for RunwareTextToImageModel
         public static string ToAirModelId(this TextToImageAIModel model)
         {
@@ -122,6 +142,23 @@ namespace Runware
             };
         }
 
+        
+        /// <summary>
+        /// Returns the width and height dimensions for a given ImageShape.
+        /// </summary>
+        /// <param name="shape">The ImageShape enum value.</param>
+        /// <returns>A tuple containing (width, height) dimensions.</returns>
+        public static (int width, int height) GetDimensions(this ImageShape shape)
+        {
+            return shape switch
+            {
+                ImageShape.Square => (1024, 1024),
+                ImageShape.Horizontal => (1024, 768),
+                ImageShape.Vertical => (768, 1024),
+                _ => throw new ArgumentOutOfRangeException(nameof(shape), shape, null)
+            };
+        }
+
         public static int ValidateDivisibleBy64(int value)
         {
             if (value % 64 != 0)
@@ -162,21 +199,6 @@ namespace Runware
             return json;
         }
 
-        /// <summary>
-        /// Returns the width and height dimensions for a given ImageShape.
-        /// </summary>
-        /// <param name="shape">The ImageShape enum value.</param>
-        /// <returns>A tuple containing (width, height) dimensions.</returns>
-        public static (int width, int height) GetDimensions(this ImageShape shape)
-        {
-            return shape switch
-            {
-                ImageShape.Square => (1024, 1024),
-                ImageShape.Horizontal => (1024, 768),
-                ImageShape.Vertical => (768, 1024),
-                _ => throw new ArgumentOutOfRangeException(nameof(shape), shape, null)
-            };
-        }
     }
 
 }

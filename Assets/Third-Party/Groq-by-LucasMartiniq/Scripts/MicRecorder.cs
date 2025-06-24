@@ -26,7 +26,7 @@ public class MicRecorder : MonoBehaviour
     protected void Start()
     {
         micDevice = Microphone.devices[0];
-        
+
         // Register with the MicRecorderManager
         try
         {
@@ -67,10 +67,10 @@ public class MicRecorder : MonoBehaviour
         Microphone.End(micDevice);
         isRecording = false;
         hasTriggeredOverRecord = false;
-        
+
         // Notify the manager that recording has stopped
         MicRecorderManager.Instance.NotifyRecordingStopped(this);
-        
+
         Debug.Log("Recording stopped.");
 
         SaveWav("recorded_audio", recordedClip);
@@ -82,7 +82,7 @@ public class MicRecorder : MonoBehaviour
     protected virtual void SaveWav(string filename, AudioClip clip)
     {
         filePath = Path.Combine(Application.persistentDataPath, filename + ".wav");
-        if(SavWav.Save(filename, clip, true))
+        if (SavWav.Save(filename, clip, true))
         {
             Debug.Log("Saved WAV to: " + filePath);
         }
@@ -94,7 +94,7 @@ public class MicRecorder : MonoBehaviour
         if (isRecording && !hasTriggeredOverRecord)
         {
             float currentRecordingTime = Time.time - recordingStartTime;
-            
+
             if (currentRecordingTime >= duration)
             {
                 hasTriggeredOverRecord = true;
@@ -124,7 +124,7 @@ public class MicRecorder : MonoBehaviour
         {
             return 0f;
         }
-        
+
         return Time.time - recordingStartTime;
     }
 
@@ -138,7 +138,7 @@ public class MicRecorder : MonoBehaviour
         {
             return 0f;
         }
-        
+
         float remaining = duration - GetCurrentRecordingTime();
         return Mathf.Max(0f, remaining);
     }
@@ -203,7 +203,11 @@ public class MicRecorder : MonoBehaviour
         // Unregister from the MicRecorderManager
         try
         {
-            MicRecorderManager.Instance.UnregisterRecorder(this);
+            if (MicRecorderManager.Instance != null)
+            {
+                MicRecorderManager.Instance.UnregisterRecorder(this);
+            }
+
         }
         catch (System.Exception ex)
         {

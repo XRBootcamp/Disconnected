@@ -861,7 +861,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 031588bf656b2854397672ccadc647d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  duration: 30
   sampleRate: 44100
   onRecordedAudio:
     m_PersistentCalls:
@@ -1296,7 +1295,7 @@ GameObject:
   - component: {fileID: 1172345323}
   - component: {fileID: 1172345324}
   m_Layer: 0
-  m_Name: GlobalMicRecorder
+  m_Name: +++ MicRecorderManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1329,6 +1328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9564ea68a9df1294aa32920a13b65e79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  duration: 30
   isAnyRecording: 0
   currentRecordingRecorder: {fileID: 0}
   onRecordingStarted:
@@ -1338,6 +1338,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onRecordingBlocked:
+    m_PersistentCalls:
+      m_Calls: []
+  onDurationChanged:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &1195649100
@@ -1702,6 +1705,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1238887480}
   m_CullTransparentMesh: 0
+--- !u!1 &1382887322
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1382887323}
+  - component: {fileID: 1382887324}
+  m_Layer: 0
+  m_Name: '////////// AI ASSISTANT MANAGER '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1382887323
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382887322}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9.663717, y: -6.946447, z: -8.91283}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1382887324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382887322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e18bd0cd88601f04fa721528b8984c71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  aiGameSettings: {fileID: 11400000, guid: 11fe254f538770f489bee5775b6f81af, type: 2}
+  aiAssistantPrefab: {fileID: 8922837929681574246, guid: 044a68622a479eb45bfc1d3f08ce5c66, type: 3}
+  sessionPreferences:
+    imageArtStyle: 
+  aiClientToggle: {fileID: 11400000, guid: 1cbfabbe33b28594f8880b522e0e42d6, type: 2}
 --- !u!1 &1411714650
 GameObject:
   m_ObjectHideFlags: 0
@@ -1980,6 +2032,9 @@ MonoBehaviour:
   audioSource: {fileID: 1560544263}
   selectedVoice: 14
   prompt: I love building and shipping new features for our students!
+  onCompletedTTS:
+    m_PersistentCalls:
+      m_Calls: []
   filteredSelectedVoice: 1
 --- !u!4 &1560544265
 Transform:
@@ -2567,8 +2622,9 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 2099547245}
-  - {fileID: 693191778}
   - {fileID: 1172345323}
+  - {fileID: 1382887323}
+  - {fileID: 693191778}
   - {fileID: 1411714653}
   - {fileID: 1741711481}
   - {fileID: 70487072}

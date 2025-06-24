@@ -16,12 +16,7 @@ public class MicRecorderManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindObjectOfType<MicRecorderManager>();
-                if (instance == null)
-                {
-                    Debug.LogError("[MicRecorderManager] MicRecorderManager not found in scene! Make sure to add it to your scene.");
-                    throw new System.InvalidOperationException("MicRecorderManager not found in scene. Add it to your scene before using it.");
-                }
+                instance = FindFirstObjectByType<MicRecorderManager>();
             }
             return instance;
         }
@@ -269,16 +264,17 @@ public class MicRecorderManager : MonoBehaviour
 
     void OnDestroy()
     {
+        // Clean up events
+        onRecordingStarted?.RemoveAllListeners();
+        onRecordingStopped?.RemoveAllListeners();
+        onRecordingBlocked?.RemoveAllListeners();
+        onDurationChanged?.RemoveAllListeners();
+
         // Clear the singleton instance when destroyed
         if (instance == this)
         {
             instance = null;
         }
 
-        // Clean up events
-        onRecordingStarted?.RemoveAllListeners();
-        onRecordingStopped?.RemoveAllListeners();
-        onRecordingBlocked?.RemoveAllListeners();
-        onDurationChanged?.RemoveAllListeners();
     }
 } 

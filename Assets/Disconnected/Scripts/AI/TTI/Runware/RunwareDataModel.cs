@@ -37,24 +37,24 @@ namespace Runware
     // NOTE: according to documentation: https://runware.ai/docs/en/getting-started/how-to-connect
     public class TextToImageRequestModel
     {
-        [JsonInclude] public string taskType = "imageInference";
-        [JsonInclude] public string taskUUID;
-        [JsonInclude] public string positivePrompt;
-        [JsonInclude] public string model;
-        [JsonInclude] public string outputType;
-        [JsonInclude] public string outputFormat;
-        [JsonInclude] public int height;
-        [JsonInclude] public int width;
-        [JsonInclude] public int numberResults; // default: 1
-        [JsonInclude] public TextToImageRequestAdvancedFeatures advancedFeatures;
-        [JsonInclude] public bool? includeCost = true; // set as default so we always know
+        public string taskType {get; set;} = "imageInference";
+        public string taskUUID {get; set;}
+        public string positivePrompt {get; set;}
+        public string model {get; set;}
+        public string outputType {get; set;}
+        public string outputFormat {get; set;}
+        public int height {get; set;}
+        public int width {get; set;}
+        public int numberResults {get; set;} // default: 1
+        public TextToImageRequestAdvancedFeatures advancedFeatures {get; set;} = null;
+        public bool? includeCost {get; set;} = true; // set as default so we always know
 
-        [JsonInclude] public bool? checkNSFW;
+        public bool? checkNSFW {get; set;}
 
-        [CanBeNull][JsonInclude] public string negativePrompt;
+        [CanBeNull]public string negativePrompt {get; set;}
 
-        [JsonInclude] public int? steps; // default: recommended by model, if none - whatever runware defines as default
-        [JsonInclude] public double? CFGScale; // default: recommended by model, if none - whatever runware defines as default
+        public int? steps {get; set;} // default: recommended by model, if none - whatever runware defines as default
+        public double? CFGScale {get; set;} // default: recommended by model, if none - whatever runware defines as default
 
         public TextToImageRequestModel(
             string prompt,
