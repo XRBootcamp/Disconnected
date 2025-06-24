@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "com.unity.addressables": "2.3.16",
+    "com.boxqkrtm.ide.cursor": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
+    "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
+    "com.siccity.gltfutility": "https://github.com/Siccity/GLTFUtility.git",
     "com.unity.ai.navigation": "2.0.6",
     "com.unity.cloud.gltfast": "6.13.0",
     "com.unity.collab-proxy": "2.8.2",
