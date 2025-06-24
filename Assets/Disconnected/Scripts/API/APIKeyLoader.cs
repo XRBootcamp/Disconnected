@@ -12,6 +12,8 @@ public class APIKeyLoader : MonoBehaviour
     public GroqApiClient GroqApi { get; private set; }
     public RunwareApiClient RunwareApi { get; private set; }
 
+    public SF3DAPIClient SF3DApi {get; private set; }
+
     private static bool _initialized = false;
 
     private void Awake()
@@ -48,8 +50,8 @@ public class APIKeyLoader : MonoBehaviour
         GroqHttpClient = new HttpClient();
         GroqHttpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Config.groqKey);
-
         GroqApi = new GroqApiClient(Config.groqKey, GroqHttpClient);
+        SF3DApi = new SF3DAPIClient(Config.stableFastKey);
 
         _initialized = true;
     }

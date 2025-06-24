@@ -17,6 +17,7 @@ using System.Linq.Expressions;
 [RequireComponent(typeof(WhisperTranscriber))]
 [RequireComponent(typeof(GroqTTS))]
 [RequireComponent(typeof(RunwareTTI))]
+[RequireComponent(typeof(SF3DAPIClient))]
 [RequireComponent(typeof(AudioSource))]
 public class AIAssistant : MonoBehaviour
 {
@@ -34,6 +35,8 @@ public class AIAssistant : MonoBehaviour
 
     [SerializeField] private GroqTTS textToSpeechAI;
     [SerializeField] private RunwareTTI textToImageAI;
+
+    [SerializeField] private SF3DAPIClient imageTo3DAI;
 
     [Space]
     [Header("AI Reasoning")]
@@ -71,13 +74,17 @@ public class AIAssistant : MonoBehaviour
 
     public State CurrentState { get => state; set => state = value; }
 
-    private void OnValidate() {
+    /// <summary>
+    /// To populate everything I can right away
+    /// </summary>
+    private void OnValidate() 
+    {
         micRecorder = GetComponent<MicRecorder>();
         speech2TextAI = GetComponent<WhisperTranscriber>();
         textToSpeechAI = GetComponent<GroqTTS>();
         textToImageAI = GetComponent<RunwareTTI>();
         textToSpeechAI.audioSource = GetComponent<AudioSource>();
-
+        imageTo3DAI = GetComponent<SF3DAPIClient>();
     }
 
     void Start()
@@ -104,6 +111,7 @@ public class AIAssistant : MonoBehaviour
             tools: null
         );
 
+        // TODO: add more tools
         _reasoningAI.CreateSystemMessage(reasoningStaticSystemMessageDocuments.Select(doc => doc.text).ToList());
         _reasoningAI.AddTool(_reasoningAI.BuildTextToImagePrompt(ProcessTextToImagePrompt));
         _reasoningAI.AddTool(_reasoningAI.ExplainRuleSystem(ProcessExplainRuleSystem));
@@ -137,10 +145,11 @@ public class AIAssistant : MonoBehaviour
                 onErrorAction: null // TODO: add voice input as well
             );
 
+            await textToSpeechAI.GenerateAndPlaySpeech(assistantResponse);
+
             // TODO: this part should only happen if it successfully returns stuff
             UnityMainThreadDispatcher.Instance().Enqueue(async () =>
             {
-                await textToSpeechAI.GenerateAndPlaySpeech(assistantResponse);
 
                 chatData.promptCompiler = newPromptCompiler;
                 chatData.assistantResponse = assistantResponse;
