@@ -3,30 +3,47 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 using Siccity.GLTFUtility;
-using UnityEditor; // Import the GLTFUtility namespace
+using UnityEditor;
 
 public class SF3DAPI : MonoBehaviour
 {
-    [Header("Stable Fast 3D API Settings")]
-    public string apiUrl = "https://api.stability.ai/v2beta/3d/stable-fast-3d"; // The Stable Fast 3D endpoint
+    [Header("Stable Fast 3D API Settings")] [Tooltip("API endpoint for Stable Fast 3D")]
+    public string apiUrl = "https://api.stability.ai/v2beta/3d/stable-fast-3d"; // API URL for Stable Fast 3D
 
+    [Tooltip("Your Stable Fast 3D API Key")]
     public string apiKey = "YOUR_API_KEY"; // Replace with your actual API key
+
+    [Header("Paths for Image and Output")] [Tooltip("Path to the image to send to the API for 3D generation")]
     public string imagePath = "Assets/Textures/cat-statue.png"; // Path to your image (cat statue)
+
+    [Tooltip("Directory where the GLB file should be saved")]
+    public string outputDirectory = "Assets/Models/"; // Folder to save the generated model
+
+    [Tooltip("The name for the generated GLB file")]
+    public string outputFileName = "3d-cat-statue.glb"; // Name of the generated file
+
+    [Header("Prefab Settings")] [Tooltip("Directory where prefabs will be saved")]
+    public string prefabDirectory = "Assets/Prefabs/"; // Folder to save prefabs
+
+    [Tooltip("Prefab name")] public string prefabName = "3d-cat-statue.prefab"; // Name of the prefab
 
     void Start()
     {
-        // Start the coroutine to generate the 3D model
-        StartCoroutine(Generate3DModel());
+        // Start the coroutine to generate the 3D model when the scene starts
+        StartCoroutine(Generate3DModel(imagePath));
     }
 
-    IEnumerator Generate3DModel()
+    // Generate the 3D model by sending an image to the API
+    public IEnumerator Generate3DModel(string imagePath)
     {
-        // Create the form data to send the image
-        byte[] imageBytes = File.ReadAllBytes(imagePath); // Read image file as byte array
+        // Read image file as byte array
+        byte[] imageBytes = File.ReadAllBytes(imagePath);
+
+        // Create form data for the image
         WWWForm form = new WWWForm();
         form.AddBinaryData("image", imageBytes, Path.GetFileName(imagePath), "image/png");
 
-        // Create the UnityWebRequest to send the image data to the API
+        // Send image to the API to generate 3D model
         using (UnityWebRequest request = UnityWebRequest.Post(apiUrl, form))
         {
             // Add authorization header
@@ -42,8 +59,12 @@ public class SF3DAPI : MonoBehaviour
                 byte[] responseData = request.downloadHandler.data;
                 Debug.Log("3D model generated successfully!");
 
-                // Process the returned data (3D model in GLB format)
-                SaveModelToFile(responseData);
+                // Save and load the model
+                string modelFilePath = SaveModelToFile(responseData);
+                GameObject loadedModel = LoadModel(modelFilePath);
+
+                // Optionally, save this loaded model as a prefab
+                SavePrefab(loadedModel);
             }
             else
             {
@@ -52,53 +73,55 @@ public class SF3DAPI : MonoBehaviour
         }
     }
 
-    // Save the model to a file
-    void SaveModelToFile(byte[] modelData)
+    // Save the generated model to a file and return the file path
+    string SaveModelToFile(byte[] modelData)
     {
-        string outputPath = "Assets/Models/3d-cat-statue.glb"; // Path to save the generated model
-        File.WriteAllBytes(outputPath, modelData); // Write the response data to a GLB file
+        // Ensure the output directory exists
+        if (!Directory.Exists(outputDirectory))
+        {
+            Directory.CreateDirectory(outputDirectory);
+        }
+
+        // Generate the full path to save the GLB file
+        string outputPath = Path.Combine(outputDirectory, outputFileName);
+        File.WriteAllBytes(outputPath, modelData); // Save the model to the specified path
         Debug.Log($"3D model saved to: {outputPath}");
 
-        // Load the model into Unity and instantiate it
-        GameObject loadedModel = LoadModel(outputPath);
-
-        // Optionally, save this loaded model as a prefab
-        SavePrefab(loadedModel);
+        return outputPath; // Return the path to the saved model
     }
 
-    // Function to load the model using GLTFUtility
-    GameObject LoadModel(string path)
+    // Load the generated model using GLTFUtility
+    GameObject LoadModel(string modelPath)
     {
-        // Check if the GLB file exists at the specified path
-        if (System.IO.File.Exists(path))
+        if (System.IO.File.Exists(modelPath))
         {
             // Load the GLB model using GLTFUtility
-            GameObject loadedModel = Importer.LoadFromFile(path);
-
-            // Set the model's position in the scene
-            loadedModel.transform.position = new Vector3(0, 0, 0); // Place it in front of the camera or wherever needed
-
-            // Optionally, you can parent the model to another GameObject
-            loadedModel.transform.SetParent(this.transform);
-
+            GameObject loadedModel = Importer.LoadFromFile(modelPath);
+            loadedModel.transform.position = new Vector3(0, 0, 0); // Position the model at the origin
+            // loadedModel.transform.SetParent(this.transform);  // Optionally parent it to this object
             Debug.Log("Model loaded into Unity.");
             return loadedModel;
         }
         else
         {
-            Debug.LogError("GLB file not found at: " + path);
+            Debug.LogError($"GLB file not found at: {modelPath}");
             return null;
         }
     }
 
-    // Function to save the model as a prefab
+    // Save the loaded model as a prefab for later use
     void SavePrefab(GameObject model)
     {
         if (model != null)
         {
-            // Create a prefab from the loaded model
-            string prefabPath = "Assets/Prefabs/3d-cat-statue.prefab";
-            PrefabUtility.SaveAsPrefabAsset(model, prefabPath);
+            // Ensure the prefab directory exists
+            if (!Directory.Exists(prefabDirectory))
+            {
+                Directory.CreateDirectory(prefabDirectory);
+            }
+
+            string prefabPath = Path.Combine(prefabDirectory, prefabName);
+            PrefabUtility.SaveAsPrefabAsset(model, prefabPath); // Save the model as a prefab
             Debug.Log($"Prefab saved to: {prefabPath}");
         }
         else
