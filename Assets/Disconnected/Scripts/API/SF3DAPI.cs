@@ -2,7 +2,7 @@ using System.Collections;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
-using Siccity.GLTFUtility;
+using GLTFast;
 using UnityEditor;
 
 public class SF3DAPI : MonoBehaviour
@@ -61,10 +61,14 @@ public class SF3DAPI : MonoBehaviour
 
                 // Save and load the model
                 string modelFilePath = SaveModelToFile(responseData);
-                GameObject loadedModel = LoadModel(modelFilePath);
-
+                
+                LoadModel(modelFilePath, (loadedModel) => {
+                    SavePrefab(loadedModel);
+                });
+                
+                //GameObject loadedModel = LoadModel(modelFilePath);
                 // Optionally, save this loaded model as a prefab
-                SavePrefab(loadedModel);
+                //SavePrefab(loadedModel);
             }
             else
             {
@@ -91,6 +95,33 @@ public class SF3DAPI : MonoBehaviour
     }
 
     // Load the generated model using GLTFUtility
+    
+    async void LoadModel(string modelPath, System.Action<GameObject> onModelLoaded)
+    {
+        var gltf = new GltfImport();
+        var success = await gltf.Load("file://" + modelPath);
+
+        if (success)
+        {
+            GameObject loadedModel = new GameObject(Path.GetFileNameWithoutExtension(outputFileName));
+            success = await gltf.InstantiateMainSceneAsync(loadedModel.transform);
+            
+            if(success)
+            {
+                Debug.Log("Model loaded into Unity.");
+                onModelLoaded?.Invoke(loadedModel);
+            } else {
+                Debug.LogError("glTFast instantiation failed.");
+                onModelLoaded?.Invoke(null);
+            }
+        }
+        else
+        {
+            Debug.LogError("glTFast load failed.");
+            onModelLoaded?.Invoke(null);
+        }
+    } 
+/*
     GameObject LoadModel(string modelPath)
     {
         if (System.IO.File.Exists(modelPath))
@@ -108,7 +139,7 @@ public class SF3DAPI : MonoBehaviour
             return null;
         }
     }
-
+*/
     // Save the loaded model as a prefab for later use
     void SavePrefab(GameObject model)
     {
