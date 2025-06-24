@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 16ae032271b9c47d8b91b1a482ec24f2
   m_currentHash:
     serializedVersion: 2
-    Hash: 53f0ed3ca899e472bf880ec656aa4a77
+    Hash: b1f783b9bda7c82d9bc0742b75c4e40a
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -77,7 +77,7 @@ MonoBehaviour:
       - m_Id: 857bcbd26cb194f5fbf6925b958d668f
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: d20d5a1af43e84157944366c400e1ac5
-        m_Value: <undefined>
+        m_Value: gs://gen-lang-client-0125077051.firebasestorage.app/addressables/android
       - m_Id: f211b221a8bba40b3bd668bf770514aa
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
     m_ProfileEntryNames:

@@ -63,10 +63,12 @@ namespace Disconnected.Scripts.Cloud
 
             foreach (SceneObjectData objectData in levelData.objectsInScene)
             {
-                // Solo añadimos los assets que tienen una referencia y no están ya en la lista
-                if (!string.IsNullOrEmpty(objectData.assetReferenceKey) && !filesToUpload.Contains(objectData.assetReferenceKey))
+                if (objectData.assetSource == AssetSourceType.LocalFile && !string.IsNullOrEmpty(objectData.assetReferenceKey))
                 {
-                    filesToUpload.Add(objectData.assetReferenceKey);
+                    if (!filesToUpload.Contains(objectData.assetReferenceKey))
+                    {
+                        filesToUpload.Add(objectData.assetReferenceKey);
+                    }
                 }
             }
 
@@ -82,8 +84,38 @@ namespace Disconnected.Scripts.Cloud
             }
 
             // --- 3. Notificar que todo el nivel está subido ---
-            // TODO: Aquí llamarías a la Cloud Function 'createLevelMetadata' para crear la entrada en la base de datos.
+            
             Debug.Log($"[Cloud] All files for level '{levelName}' have been uploaded successfully!");
+            
+            Debug.Log($"[Cloud] Registering level metadata for '{levelName}'...");
+            string metadataJson = "{\"levelName\":\"" + levelName + "\", \"author\":\"Player1\"}"; // Ejemplo
+            yield return StartCoroutine(CreateMetadataRoutine(metadataJson));
+
+            Debug.Log($"[Cloud] Full upload and registration for level '{levelName}' complete!");
+        }
+        
+        private IEnumerator CreateMetadataRoutine(string jsonPayload)
+        {
+            string metadataUrl = "https://createlevelmetadata-c4piqdcjga-uc.a.run.app"; 
+            
+            using (UnityWebRequest www = new UnityWebRequest(metadataUrl, "POST"))
+            {
+                byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonPayload);
+                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                www.downloadHandler = new DownloadHandlerBuffer();
+                www.SetRequestHeader("Content-Type", "application/json");
+
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("[Cloud] Metadata successfully created in database.");
+                }
+                else
+                {
+                    Debug.LogError($"[Cloud] Error creating metadata: {www.error}");
+                }
+            }
         }
 
         private IEnumerator UploadFileRoutine(string localPath, string cloudPath)
@@ -158,9 +190,12 @@ namespace Disconnected.Scripts.Cloud
             List<string> assetsToDownload = new List<string>();
             foreach (var objectData in levelData.objectsInScene)
             {
-                if (!string.IsNullOrEmpty(objectData.assetReferenceKey) && !assetsToDownload.Contains(objectData.assetReferenceKey))
+                if (objectData.assetSource == AssetSourceType.LocalFile && !string.IsNullOrEmpty(objectData.assetReferenceKey))
                 {
-                    assetsToDownload.Add(objectData.assetReferenceKey);
+                    if (!assetsToDownload.Contains(objectData.assetReferenceKey))
+                    {
+                        assetsToDownload.Add(objectData.assetReferenceKey);
+                    }
                 }
             }
 

@@ -47,7 +47,7 @@ namespace Disconnected.Scripts.Core
             _ = SaveLevelAsync(levelName);
         }
         [Button]
-        [GUIColor(5f, 0.1f, 0.4f)]
+        [GUIColor(1f, 0.6f, 0.4f)]
         public void LoadLevelFromEditor(string levelName)
         {
 
@@ -247,6 +247,14 @@ namespace Disconnected.Scripts.Core
             }
             
             newObject.AddComponent<UniqueID>().SetGuid(objectData.guid);
+
+            // 2. If the object had an asset, re-add the AssetSourceTracker and configure it.
+            if (!string.IsNullOrEmpty(objectData.assetReferenceKey))
+            {
+                AssetSourceTracker tracker = newObject.AddComponent<AssetSourceTracker>();
+                tracker.sourceType = objectData.assetSource;
+                tracker.referenceKey = objectData.assetReferenceKey;
+            }            
             createdObjects.Add(objectData.guid, newObject);
         }
 

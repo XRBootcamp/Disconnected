@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: 16ae032271b9c47d8b91b1a482ec24f2
   m_SerializeEntries:
   - m_GUID: e946838d486834348a0509a32cee33c7
-    m_Address: Assets/ImportedLevelAssets/light.prefab
+    m_Address: light_point
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
