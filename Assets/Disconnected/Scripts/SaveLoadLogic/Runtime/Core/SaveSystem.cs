@@ -6,6 +6,8 @@ using GLTFast;
 using GLTFast.Export;
 using Sirenix.OdinInspector;
 using Disconnected.Scripts.DataSchema; 
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Disconnected.Scripts.Core
 {
@@ -44,23 +46,15 @@ namespace Disconnected.Scripts.Core
 
             _ = SaveLevelAsync(levelName);
         }
-        
-        /*[Button]
-        [GUIColor(0.2f, 1f, 0.5f)] 
-        public void UploadLevelToCloud(string levelName)
+        [Button]
+        [GUIColor(5f, 0.1f, 0.4f)]
+        public void LoadLevelFromEditor(string levelName)
         {
-            // Primero, verifica que el CloudManager exista en la escena.
-            if (CloudManager.instance == null)
-            {
-                Debug.LogError("CloudManager instance not found in the scene. Cannot upload.");
-                return;
-            }
 
-            // Llama al método público de subida del CloudManager.
-            Debug.Log($"[Odin Button] Triggering cloud upload for level: {levelName}");
-            CloudManager.instance.UploadLevel(levelName);
+            _ = LoadLevelAsync(levelName);
         }
-        */
+        
+
 
 
     /// <summary>
@@ -132,15 +126,7 @@ namespace Disconnected.Scripts.Core
                         break;
 
                     case AssetSourceType.Addressable:
-                        finalAssetFilename = $"{objectData.guid}.glb";
-                        string exportPath = Path.Combine(directoryPath, finalAssetFilename);
-
-
-                        var exportSettings = new ExportSettings { Format = GltfFormat.Binary }; 
-                        var exporter = new GameObjectExport(exportSettings);
-                        var success = await exporter.SaveToFileAndDispose(exportPath);
-
-                        if (!success) Debug.LogError($"Failed to export {currentGO.name} to GLB.");
+                        finalAssetFilename = tracker.referenceKey;
                         break;
                 }
                 objectData.assetReferenceKey = finalAssetFilename;
@@ -217,23 +203,40 @@ namespace Disconnected.Scripts.Core
             }
             else
             {
-                if (objectData.assetSource == AssetSourceType.LocalFile)
-                {
-                    string assetPath = Path.Combine(directoryPath, objectData.assetReferenceKey);
-                
-                    if (File.Exists(assetPath))
+                 switch (objectData.assetSource)
                     {
-                        var gltf = new GltfImport();
-                        var success = await gltf.Load("file://" + assetPath);
+                        case AssetSourceType.LocalFile:
+                            // ... Logic to load GLB which already works ...
+                            string assetPath = Path.Combine(directoryPath, objectData.assetReferenceKey);
+                            if (File.Exists(assetPath))
+                            {
+                                var gltf = new GltfImport();
+                                var success = await gltf.Load("file://" + assetPath);
+                                if (success)
+                                {
+                                    newObject = new GameObject(objectData.objectName);
+                                    await gltf.InstantiateMainSceneAsync(newObject.transform);
+                                }
+                            }
+                            break;
 
-                        if (success)
-                        {
-                            newObject = new GameObject(objectData.objectName);
-                            await gltf.InstantiateMainSceneAsync(newObject.transform);
-                        }
+                        case AssetSourceType.Addressable:
+                            // We use the Addressables API to instantiate the Prefab by its key.
+                            AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(objectData.assetReferenceKey);
+                            newObject = await handle.Task; // We wait for the operation to finish.
+                            
+                            // We check if the load was successful.
+                            if (handle.Status == AsyncOperationStatus.Succeeded && newObject != null)
+                            {
+                                newObject.name = objectData.objectName;
+                            }
+                            else
+                            {
+                                Debug.LogError($"Failed to load Addressable with key: {objectData.assetReferenceKey}");
+                                newObject = null; // We make sure it's null so the fallback is created.
+                            }
+                            break;
                     }
-                }
-                // TODO:"case AssetSourceType.Addressable:" en the future.
             }
 
             if (newObject == null) 
