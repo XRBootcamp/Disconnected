@@ -14,33 +14,19 @@ using Assets.Disconnected.Scripts.AI.AIAssistant.API;
 using System.Linq.Expressions;
 using System.IO;
 
-[RequireComponent(typeof(MicRecorder))]
-[RequireComponent(typeof(WhisperTranscriber))]
-[RequireComponent(typeof(GroqTTS))]
+
 [RequireComponent(typeof(RunwareTTI))]
-[RequireComponent(typeof(AudioSource))]
-public class AIAssistant : MonoBehaviour
+public class AISpeechToImage3dAssistant : BaseAIAssistant
 {
-    public enum State
-    {
-        None = 0, // when nothing (default)
-        Selected = 1, // when selected by user
-        OnHold = 2 // when calling the API
-    }
 
-    [SerializeField] private MicRecorder micRecorder;
+    [Header("Image AIs")]
 
-    [Header("AIs")]
-    [SerializeField] private WhisperTranscriber speech2TextAI;
-
-    [SerializeField] private GroqTTS textToSpeechAI;
     [SerializeField] private RunwareTTI textToImageAI;
 
     [SerializeField] private SF3DAPIClient imageTo3DAI;
 
     [Space]
-    [Header("AI Reasoning")]
-    private AIAssistantReasoningController _reasoningAI;
+    [Header("AI Reasoning Data")]
     [SerializeField] private TextAsset reasoningUserPromptIntro;
     [SerializeField] private List<TextAsset> reasoningStaticSystemMessageDocuments;
     [SerializeField] private TextAsset buildingTextToImagePromptSystemDocument;
@@ -48,61 +34,39 @@ public class AIAssistant : MonoBehaviour
     [SerializeField] private ChatInternalMemory chatData;
 
     [Space]
-    [Header("Debug")]
-    [SerializeField] private AIClientToggle aiClientToggle;
-
-    [Space]
-    [SerializeField] private AudioClip micRecording;
-    [SerializeField, TextArea(5, 20)] private string userIntent;
-    [SerializeField, TextArea(5, 20)] private string assistantResponse;
-    [SerializeField, TextArea(2, 20)] private string toolOutput;
-    [SerializeField, TextArea(2, 20)] private string errorOutput;
-
+    [Header("Debug - Text to Image")]
     [SerializeField] private Texture2D lastGeneratedImage;
-    [SerializeField] private State state;
-
-    // TODO: these unity events we will see what makes sense
-    public UnityEvent<AIAssistant> onApiResponse;
-    public UnityEvent<AIAssistant> onApiRequest;
-    public UnityEvent<AIAssistant> onSelected;
-    public UnityEvent<AIAssistant> onUnselected;
-    public UnityEvent<AIAssistant> onClosing;
-
-    public State CurrentState { get => state; set => state = value; }
 
     /// <summary>
     /// To populate everything I can right away
     /// </summary>
-    private void OnValidate()
+    protected override void OnValidate()
     {
-        micRecorder = GetComponent<MicRecorder>();
-        speech2TextAI = GetComponent<WhisperTranscriber>();
-        textToSpeechAI = GetComponent<GroqTTS>();
+        base.OnValidate();
         textToImageAI = GetComponent<RunwareTTI>();
-        textToSpeechAI.audioSource = GetComponent<AudioSource>();
     }
 
-    void Start()
+    protected override void Start()
     {
+        base.Start();
         if (APIKeyLoader.Instance == null)
         {
             Debug.LogError("APIKeyLoader instance not found!");
             return;
         }
+
+        // TODO: Improve implementation of SF3DApi
         imageTo3DAI = APIKeyLoader.Instance.SF3DApi;
-        // TODO: load files - create my assistant 
-        // NOTE: events  
-        micRecorder.onRecordedAudio.AddListener(UserRecordedIntent);
-        micRecorder.onDurationPassed.AddListener(DiscardMicRecording);
     }
 
-    public void Initialize(AIGameSettings gameSettings)
+    public override void Initialize(AIGameSettings gameSettings)
     {
-        MicRecorderManager.Instance.RegisterRecorder(micRecorder);
-        textToSpeechAI.SetVoice(gameSettings.aiAssistantVoice);
         textToImageAI.model = gameSettings.textToImageAIModelName;
 
-        _reasoningAI = new AIAssistantReasoningController(
+        base.Initialize(gameSettings);
+
+        /*
+        _reasoningAIService = new AIAssistantReasoningController(
             model: gameSettings.aiReasoningModel,
             currentSystemMessage: null,
             image2TextModelName: gameSettings.textToImageAIModelName.ToString(),
@@ -111,49 +75,19 @@ public class AIAssistant : MonoBehaviour
             explainRuleSystemDescription: explainRuleSystemDocument.text,
             tools: null
         );
+        */
+
+        // Initialize reasoning service for text to image assistance
+        _reasoningAIService.Image2TextModelName = gameSettings.textToImageAIModelName.ToString();
+        _reasoningAIService.BuildTextToImagePromptDescription = buildingTextToImagePromptSystemDocument.text;
+        _reasoningAIService.UserRequestIntro = reasoningUserPromptIntro.text;
+        _reasoningAIService.ExplainRuleSystemDescription = explainRuleSystemDocument.text;
 
         // TODO: add more tools
-        _reasoningAI.CreateSystemMessage(reasoningStaticSystemMessageDocuments.Select(doc => doc.text).ToList());
-        _reasoningAI.AddTool(_reasoningAI.BuildTextToImagePrompt(ProcessTextToImagePrompt));
-        _reasoningAI.AddTool(_reasoningAI.ExplainRuleSystem(ProcessExplainRuleSystem));
+        _reasoningAIService.CreateSystemMessage(reasoningStaticSystemMessageDocuments.Select(doc => doc.text).ToList());
+        _reasoningAIService.AddTool(_reasoningAIService.BuildTextToImagePrompt(ProcessTextToImagePrompt));
+        _reasoningAIService.AddTool(_reasoningAIService.ExplainRuleSystem(ProcessExplainRuleSystem));
     }
-
-
-    #region Handle User Recordings
-    public void StartRecordingUser()
-    {
-        // NOTE: only record when it is over
-        if (state == State.OnHold) return;
-
-        state = State.OnHold;
-        micRecorder.StartRecording();
-    }
-
-    public void StopRecording()
-    {
-        // this triggers the onRecordedAudio once it is saved and we can proceed with everything
-        // from UserRecordedIntent
-        micRecorder.StopAndSave();
-    }
-
-    /// <summary>
-    /// Method that will start the process to make request to assistant 
-    /// </summary>
-    /// <param name="arg0">ignored</param>
-    private async void UserRecordedIntent(AudioClip arg0)
-    {
-        micRecording = micRecorder.GetLastAudioClip();
-        await MakeRequestToAssistant();
-    }
-
-
-    // TODO: unsure if this is the intended behaviour when mic audio duration surpassed the full possible duration
-    private void DiscardMicRecording(AudioClip clip = null)
-    {
-        micRecording = null;
-        state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
-    }
-    #endregion
 
     #region AI-Assistant-Main-Methods
 
@@ -162,16 +96,12 @@ public class AIAssistant : MonoBehaviour
     /// for it to generate image/3d model or answer user questions.
     /// </summary>
     /// <returns></returns>
-    public async Task MakeRequestToAssistant()
+    protected override async Task MakeRequestToAssistant()
     {
-        string newUserIntent = await speech2TextAI.TranscribeAsync(micRecorder.GetLastFilePath());
-        SetUserIntent(newUserIntent);
-
+        
         // NOTE: this method does all the Heavy Lifting
-        string result = await _reasoningAI.RunReasoningAsync(chatData, newUserIntent);
+        toolOutput = await _reasoningAIService.RunReasoningAsync(chatData, userIntent);
 
-        // reset state once it has been handled
-        state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
     }
 
     /// <summary>
@@ -184,7 +114,7 @@ public class AIAssistant : MonoBehaviour
     {
         try
         {
-            Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} input:\n{arg}");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} input:\n{arg}");
 
             // get json parse it - and transform it into our response data model
             var jsonArgs = JsonDocument.Parse(arg);
@@ -195,14 +125,14 @@ public class AIAssistant : MonoBehaviour
             // transform response into new prompt compiler that will be available for the user later on at the end
             var newPromptCompiler = text2ImageResponse.ToPromptCompiler(chatData.promptCompiler);
 
-            Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} PromptCompiler:\n{JsonSerializer.Serialize(newPromptCompiler)}");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} PromptCompiler:\n{JsonSerializer.Serialize(newPromptCompiler)}");
 
             // convert the promptCompiler into the API request model for the text to image prompt
             var request = newPromptCompiler.ToTextToImageRequestModel();
 
             // this return string is useless but it is what I am returning because GroqTTS requires me to return a string at the end 
             var returnString = JsonSerializer.Serialize(new { assistantResponse = $"{assistantResponse}", result = $"{request.ToString()}" });
-            Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} TextToImageRequestModel:\n{returnString}");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} TextToImageRequestModel:\n{returnString}");
 
             // Generate text to image results based on prompt
             var imageResults = await textToImageAI.GenerateTextToImage(
@@ -219,7 +149,7 @@ public class AIAssistant : MonoBehaviour
             var modelTasks = new List<Task<GameObject>>();
 
             // Add text-to-speech task - not storing since it is the assistant talking
-            tasks.Add(textToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None));
+            tasks.Add(assistantTextToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None));
 
             // Add all 3D model generation tasks and collect their results
             foreach (var image in imageResults)
@@ -249,7 +179,7 @@ public class AIAssistant : MonoBehaviour
                 }
             }
 
-            Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Count} 3D models");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Count} 3D models");
 
             // TODO: part to invoke UI / UX changes in the main thread
             UnityMainThreadDispatcher.Instance().Enqueue(async () =>
@@ -264,16 +194,20 @@ public class AIAssistant : MonoBehaviour
                     imageTo3DAI.SavePrefab(model, model.name);
                 }
 #endif
-                Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} Completed!!!");
+                Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} Completed!!!");
 
                 // TODO: UI Display stuff - event invoke
             });
+            errorOutput = null;
             return returnString;
         }
         catch (Exception e)
         {
-            Debug.LogError($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} ERROR:\n{e}");
-            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            string errorMessage = $"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} ERROR:\n{e}";
+            Debug.LogError(errorMessage);
+            errorOutput = errorMessage;
+
+            //state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
 
             return null;
         }
@@ -291,7 +225,7 @@ public class AIAssistant : MonoBehaviour
         try
         {
             // get json parse it - and transform it into our response data model
-            Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} input:\n{arg}");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} input:\n{arg}");
             var jsonArgs = JsonDocument.Parse(arg);
             var jsonModel = JsonSerializer.Deserialize<AssistantResponseOnlyModel>(jsonArgs.RootElement);
 
@@ -299,9 +233,9 @@ public class AIAssistant : MonoBehaviour
             string assistantResponse = jsonModel.assistantResponse;
 
             var returnString = JsonSerializer.Serialize(jsonModel);
-            await textToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None);
+            await assistantTextToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None);
 
-            Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} Completed!!!");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} Completed!!!");
 
             // TODO: if there is anything that needs to be done in the main thread
             /*
@@ -314,8 +248,8 @@ public class AIAssistant : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} ERROR:\n{e}");
-            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} ERROR:\n{e}");
+            //state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
             return null;
         }
     }
@@ -328,95 +262,25 @@ public class AIAssistant : MonoBehaviour
         lastGeneratedImage = newImages.FirstOrDefault().texture;
     }
 
-    private void SetUserIntent(string text)
-    {
-        userIntent = text;
-    }
     #endregion
 
 
 
     #region Buttons
-
+    // NOTE: buttons do not propagate in extended classes
     [Button]
-    private void FirstStartRecording()
+    protected override void FirstStartRecording()
     {
-        // NOTE: Fake Mic Recording
-        if (AIClientFakes.TryHandleFakeRecorder(aiClientToggle, SetFakeMicRecording))
-        {
-            return;
-        }
-
-        StartRecordingUser();
+        base.FirstStartRecording();
     }
 
     [Button]
-    private void SecondStopRecordingAndSave()
+    protected override void SecondStopRecordingAndSave()
     {
-        // NOTE: Fake Mic Recording
-        if (AIClientFakes.TryHandleFakeRecorder(aiClientToggle, SetFakeMicRecording))
-        {
-            return;
-        }
-
-        StopRecording();
-    }
-
-    private void SetFakeMicRecording(AudioClip newClip)
-    {
-#if UNITY_EDITOR
-        micRecorder.OverrideAudioClipAndPath(newClip);
-#endif
-        micRecorder.onRecordedAudio.Invoke(newClip);
+        base.SecondStopRecordingAndSave();
     }
 
     #endregion
 
 
-
-    #region State-Changes - TODO if needed
-    public void OnSelect()
-    {
-        // Use the singleton instance
-        AIAssistantManager.Instance.SelectAssistant(this);
-        onSelected.Invoke(this);
-    }
-
-    public void OnUnselect()
-    {
-        // Use the singleton instance
-        AIAssistantManager.Instance.TryUnselectAssistant(this);
-        onUnselected.Invoke(this);
-    }
-
-    public void ClosingChat()
-    {
-        if (state == State.OnHold)
-        {
-            // TODO: Implement UI Feature of can't close while running
-            return;
-        }
-
-        // Use the singleton instance
-        AIAssistantManager.Instance.RemoveChat(this);
-        MicRecorderManager.Instance.UnregisterRecorder(micRecorder);
-        onClosing.Invoke(this);
-
-        // TODO: UI/Animation - destroy the object clearly
-
-        Destroy(gameObject);
-    }
-
-    #endregion
-
-
-    // NOTE: to simplify the process
-    private void OnDestroy()
-    {
-        onApiResponse.RemoveAllListeners();
-        onApiRequest.RemoveAllListeners();
-        onSelected.RemoveAllListeners();
-        onUnselected.RemoveAllListeners();
-        onClosing.RemoveAllListeners();
-    }
 }

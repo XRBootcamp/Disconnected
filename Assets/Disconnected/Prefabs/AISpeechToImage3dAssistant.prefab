@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 1348043392338112981}
   - component: {fileID: 8746984680263264971}
   m_Layer: 0
-  m_Name: AIAssistant
+  m_Name: AISpeechToImage3dAssistant
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

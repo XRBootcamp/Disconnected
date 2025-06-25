@@ -6,7 +6,8 @@ using UnityEngine;
 public class AIAssistantManager : MonoBehaviour
 {
     [SerializeField] private AIGameSettings aiGameSettings;
-    [SerializeField] private GameObject aiAssistantPrefab;
+    [SerializeField] private GameObject aiSpeechToImage3dAssistant;
+    [SerializeField] private GameObject speechToSpeechAssistant;
 
     [Header("Prompt Overrides")]
     [SerializeField] private ImageSessionPreferences sessionPreferences;
@@ -19,8 +20,8 @@ public class AIAssistantManager : MonoBehaviour
     // NOTE: when session stuff changes, need to change here and call other open assistants
     // unsure if need this manager to manage it - but might be important for other stuff
 
-    private HashSet<AIAssistant> assistantsList;
-    private AIAssistant currentAssistant;
+    private HashSet<BaseAIAssistant> assistantsList;
+    private BaseAIAssistant currentAssistant;
 
     // Singleton instance - destroyed when scene ends
     private static AIAssistantManager instance;
@@ -64,26 +65,26 @@ public class AIAssistantManager : MonoBehaviour
     public void CreateNewChat()
     {
         // FIXME: assign position, rotation
-        var obj = Instantiate(aiAssistantPrefab);
-        AIAssistant newAssistant = obj.GetComponent<AIAssistant>();
+        var obj = Instantiate(aiSpeechToImage3dAssistant);
+        BaseAIAssistant newAssistant = obj.GetComponent<BaseAIAssistant>();
         newAssistant.Initialize(aiGameSettings);
 
         assistantsList.Add(newAssistant);
         newAssistant.onClosing.AddListener(RemoveChat);
     }
 
-    public AIAssistant.State SetStateAfterOnHold(AIAssistant aiAssistant)
+    public BaseAIAssistant.State SetStateAfterOnHold(BaseAIAssistant aiAssistant)
     {
-        return currentAssistant == aiAssistant ? AIAssistant.State.Selected : AIAssistant.State.None;
+        return currentAssistant == aiAssistant ? BaseAIAssistant.State.Selected : BaseAIAssistant.State.None;
     } 
 
-    public void SelectAssistant(AIAssistant aiAssistant)
+    public void SelectAssistant(BaseAIAssistant aiAssistant)
     {
         TryUnselectAssistant(currentAssistant);
         currentAssistant = aiAssistant;
     }
 
-    public void TryUnselectAssistant(AIAssistant aiAssistant)
+    public void TryUnselectAssistant(BaseAIAssistant aiAssistant)
     {
         if (currentAssistant == aiAssistant)
         {
@@ -91,7 +92,7 @@ public class AIAssistantManager : MonoBehaviour
         }
     }
 
-    public void RemoveChat(AIAssistant toDelete)
+    public void RemoveChat(BaseAIAssistant toDelete)
     {
         TryUnselectAssistant(toDelete);
         assistantsList.Remove(toDelete);

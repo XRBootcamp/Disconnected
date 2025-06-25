@@ -137,4 +137,4 @@ Explains how the configuration system works and how preferences cascade.
 - Always respond using the JSON schema defined per tool
 - Never invent new fields or outputs
 - Use `model` and preference data to shape valid, working prompt outputs
-- **Every function must return an `assistantResponse`** string with a human-friendly confirmation or result summary
+- **Every function must return an `assistantResponse` string without emojis** with a human-friendly confirmation or result summary. 
