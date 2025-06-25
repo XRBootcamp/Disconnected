@@ -11,6 +11,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/01_AssetStore/DoorPackFree/Scenes/Demo.unity
     guid: d023fa21e226ff04abc05357e167a872
+  - enabled: 1
+    path: Assets/01_AssetStore/DoorPackFree/Scenes/Demo2.unity
+    guid: f8c7b04ea3c553f42acd919c246d8992
+  - enabled: 1
+    path: Assets/01_AssetStore/DoorPackFree/Scenes/Demo3.unity
+    guid: 65e74155878684f47912fe18d16f19e7
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 643f25f999e6cb7458fa7df133873ed8, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
