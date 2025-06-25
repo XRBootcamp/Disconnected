@@ -54,25 +54,5 @@ public class SingletonMicRecorder : MicRecorder
             Debug.LogError($"Error saving WAV to temp: {ex.Message}");
         }
     }
-    /*
-    /// <summary>
-    /// Move the last saved WAV file from temp to persistentDataPath/Recordings.
-    /// </summary>
-    public void MoveWavToPersistent()
-    {
-        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-        {
-            Debug.LogError("No temp WAV file to move.");
-            return;
-        }
-        persistentFilePath = FileManagementExtensions.MoveFileToPersistentDataPath(filePath, null);
-    }
-    
 
-    /// <summary>
-    /// Get the path to the last WAV file moved to persistent storage.
-    /// </summary>
-    /// <returns>Path to the last persistent WAV file.</returns>
-    public string GetLastPersistentFile() => persistentFilePath;
-    */
 }

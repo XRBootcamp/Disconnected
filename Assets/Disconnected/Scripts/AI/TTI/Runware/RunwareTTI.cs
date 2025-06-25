@@ -23,22 +23,16 @@ namespace Runware
         public int width = 1024;
         public int numberResults = 1;
 
-        public async Task GenerateTextToImage(string description, Action onStartAction, Action<List<Texture2D>> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction, bool alphaIsTransparency,
-            OutputType outputType = OutputType.base64Data, ImageExtensions outputFormat = ImageExtensions.PNG,
-            int width = 1024, int height = 1024, int numberResults = 1,
-            string negativePrompt = null, bool? isNSFW = null, int? overwriteDefaultSteps = null,
-            double? overwriteDefaultCFGScale = null)
+        public async Task<List<GenerateTextToImageOutputModel>> GenerateTextToImage(TextToImageRequestModel request, Action onStartAction, Action<List<GenerateTextToImageOutputModel>> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction)
         {
             var apiKeyLoader = APIKeyLoader.Instance;
             if (apiKeyLoader == null)
             {
                 Debug.LogError("APIKeyLoader instance not found!");
-                return;
+                return null;
             }
-
             try
             {
-                TextToImageRequestModel reqModel = new(description, model, outputType, outputFormat, height, width, numberResults, negativePrompt, isNSFW, overwriteDefaultSteps, overwriteDefaultCFGScale);
 
                 // NOTE: Connect UI events here - like loading screen
                 if (onStartAction != null)
@@ -46,17 +40,20 @@ namespace Runware
                     onStartAction.Invoke();
                 }
 
-                var result = await apiKeyLoader.RunwareApi.CreateTextToImageAsync(new List<TextToImageRequestModel> {reqModel});
+                var result = await apiKeyLoader.RunwareApi.CreateTextToImageAsync(new List<TextToImageRequestModel> { request });
 
-                var textures = await LoadTextures(result.data, alphaIsTransparency);
-                
+                bool alphaIsTransparency = request.advancedFeatures?.layerDiffuse ?? false;
+                var outputResult = await LoadTextures(result.data, alphaIsTransparency);
+
                 // NOTE: Connect UI events after completion
                 if (onCompleteAction != null)
                 {
-                    onCompleteAction.Invoke(textures);
+                    onCompleteAction.Invoke(outputResult);
                 }
 
                 Debug.Log($"[{nameof(RunwareTTI)}] - GenerateTextToImage SUCCESS\n{result.data}");
+
+                return outputResult;
             }
             catch (HttpRequestException e)
             {
@@ -68,12 +65,57 @@ namespace Runware
                     onErrorAction.Invoke(entity);
                 }
                 Debug.LogError($"[{nameof(RunwareTTI)}] - GenerateTextToImage ERROR\n{e.Message}");
+
+                return null;
             }
+    
+            
+        }
+        public async Task<List<GenerateTextToImageOutputModel>> GenerateTextToImage(string description, Action onStartAction, Action<List<GenerateTextToImageOutputModel>> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction, bool alphaIsTransparency,
+            OutputType outputType = OutputType.base64Data, ImageExtensions outputFormat = ImageExtensions.PNG,
+            ImageShape imageShape = ImageShape.Square, int numberResults = 1,
+            string negativePrompt = null, bool? isNSFW = null, int? overwriteDefaultSteps = null,
+            double? overwriteDefaultCFGScale = null)
+        {
+            // default values - ignore
+            if (overwriteDefaultSteps == 20)
+            {
+                overwriteDefaultSteps = null;
+            }
+            if (overwriteDefaultCFGScale == 7)
+            {
+                overwriteDefaultCFGScale = null;
+            }
+            
+            var imageDimensions = imageShape.GetDimensions();
+            
+            TextToImageRequestModel request = new(
+                prompt: description,
+                model: model,
+                type: outputType,
+                format: outputFormat,
+                alphaIsTransparency: alphaIsTransparency,
+                height: imageDimensions.height,
+                width: imageDimensions.width,
+                numberResults: numberResults,
+                negativePrompt: negativePrompt,
+                isNSFW: isNSFW,
+                overwriteDefaultSteps: overwriteDefaultSteps,
+                overwriteDefaultCFGScale: overwriteDefaultCFGScale
+            );
+
+            return await GenerateTextToImage(
+                request: request,
+                onStartAction: onStartAction,
+                onCompleteAction: onCompleteAction,
+                onErrorAction: onErrorAction
+            );
+
         }
 
-        async Task<List<Texture2D>> LoadTextures(List<TextToImageResponseModel> urls, bool alphaIsTransparency)
+        async Task<List<GenerateTextToImageOutputModel>> LoadTextures(List<TextToImageResponseModel> urls, bool alphaIsTransparency)
         {
-            List<Texture2D> listOfTextures = new();
+            List<GenerateTextToImageOutputModel> listOfTextures = new();
             for (int i = 0; i < urls.Count; i++)
             {
                 string imageUrl = urls[i].imageURL;
@@ -98,13 +140,14 @@ namespace Runware
                 _texture.name = filename;
                 _texture.alphaIsTransparency = alphaIsTransparency;
 
-                ImageManagementExtensions.WriteImageOnDisk(
+                string imagePath = ImageManagementExtensions.WriteImageOnDisk(
                     _texture,
                     filename,
-                    ImageExtensions.PNG, FileEnumPath.Temporary,
+                    ImageExtensions.PNG, 
+                    FileEnumPath.Temporary,
                     FilePaths.TEXT_TO_IMAGE, true
                 );
-                listOfTextures.Add(_texture);
+                listOfTextures.Add( new (imagePath: imagePath, texture: _texture) );
             }
             return listOfTextures;
         }
@@ -116,8 +159,8 @@ namespace Runware
         /// </summary>
 
         #region DEPRECATED
-    
-        public void GenerateTextToImage(string description, Action<Texture2D> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction, bool alphaIsTransparency,
+
+        public void GenerateTextToImage(string description, Action<GenerateTextToImageOutputModel> onCompleteAction, Action<ErrorResponseArrayModel> onErrorAction, bool alphaIsTransparency,
             OutputType outputType = OutputType.base64Data, ImageExtensions outputFormat = ImageExtensions.PNG,
             int width = 1024, int height = 1024, int numberResults = 1,
             string negativePrompt = null, bool? isNSFW = null, int? overwriteDefaultSteps = null,
@@ -130,7 +173,7 @@ namespace Runware
                 return;
             }
 
-            TextToImageRequestModel reqModel = new(description, model, outputType, outputFormat, height, width, numberResults, negativePrompt, isNSFW, overwriteDefaultSteps, overwriteDefaultCFGScale);
+            TextToImageRequestModel reqModel = new(description, model, outputType, outputFormat, alphaIsTransparency, height, width, numberResults, negativePrompt, isNSFW, overwriteDefaultSteps, overwriteDefaultCFGScale);
             var json = $"[{reqModel.ToBody()}]";
 
             ApiCall.instance.PostRequest<TextToImageResponseDataArrayModel>(
@@ -143,7 +186,7 @@ namespace Runware
 
                 if (onCompleteAction != null)
                 {
-                    onCompleteAction.Invoke(textures.FirstOrDefault<Texture2D>());
+                    onCompleteAction.Invoke(textures.FirstOrDefault<GenerateTextToImageOutputModel>());
                 }
                 UnityEngine.Debug.Log($"[{nameof(RunwareTTI)}] - GenerateTextToImage SUCCESS\n{result.data}");
 
@@ -157,7 +200,7 @@ namespace Runware
                 UnityEngine.Debug.LogError($"[{nameof(RunwareTTI)}] - GenerateTextToImage ERROR\n{error}");
             }));
         }
-        
+
         #endregion
     }
 }

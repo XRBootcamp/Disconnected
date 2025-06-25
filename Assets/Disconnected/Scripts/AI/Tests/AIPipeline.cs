@@ -1,22 +1,24 @@
 using UnityEngine;
-using NaughtyAttributes;
 using Unity.Collections;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Runware;
 using System.Linq;
+using Sirenix.OdinInspector;
 
 public class AIPipeline : MonoBehaviour
 {
-    [Header("Text-to-Speech")]
-    [SerializeField] private WhisperTranscriber text2SpeechAI;
+    [SerializeField] private MicRecorder micRecorder;
+
+    [Header("Speech-to-Text")]
+    [SerializeField] private WhisperTranscriber speech2TextAI;
 
     // TODO: Speech-to-Text AI Assistant (conversational)
 
-    [Header("Speech-to-Text Voice Actors")]
-    [SerializeField] private GameObject speech2TextAIPrefab;
-    [SerializeField] private FileEnumPath storeSpeech2TextWavFiles = FileEnumPath.Persistent;
+    [Header("Text-to-Speech Voice Actors")]
+    [SerializeField] private GameObject text2SpeechAIPrefab;
+    [SerializeField] private FileEnumPath storetext2SpeechWavFiles = FileEnumPath.Persistent;
 
 
     [Header("Text-to-Image")]
@@ -31,7 +33,9 @@ public class AIPipeline : MonoBehaviour
     [SerializeField, TextArea(5,20)] private string currentSpeech;
 
     [Space]
-    [SerializeField] private PlayAIVoice debugAIVoice;
+    // TO simulate that the conversation AI has been taken
+    [SerializeField][ExcludeReserved] private PlayAIVoice debugAIVoice;
+    //[SerializeField] private PlayAIVoice debugAIVoice;
     [SerializeField] private List<GroqTTS> listOfGeneratedGroqTTS;
 
     [Space]
@@ -52,7 +56,7 @@ public class AIPipeline : MonoBehaviour
             return;
         }
 
-        text2SpeechAI.recorder.StartRecording();
+        micRecorder.StartRecording();
     }
 
     [Button]
@@ -64,14 +68,14 @@ public class AIPipeline : MonoBehaviour
             return;
         }
 
-        text2SpeechAI.recorder.StopAndSave();
-        SetMicRecording(text2SpeechAI.recorder.GetLastAudioClip());
+        micRecorder.StopAndSave();
+        SetMicRecording(micRecorder.GetLastAudioClip());
     }
 
     private void SetFakeMicRecording(AudioClip newClip)
     {
 #if UNITY_EDITOR
-        text2SpeechAI.recorder.OverrideAudioClipAndPath(newClip);
+        micRecorder.OverrideAudioClipAndPath(newClip);
 #endif
         micRecording = newClip;
     }
@@ -90,8 +94,8 @@ public class AIPipeline : MonoBehaviour
             return;
         }
 
-        StartCoroutine(text2SpeechAI.Transcribe(
-            text2SpeechAI.recorder.GetLastFilePath(), 
+        StartCoroutine(speech2TextAI.Transcribe(
+            micRecorder.GetLastFilePath(), 
             SetCurrentSpeech 
         ));
     }
@@ -117,7 +121,7 @@ public class AIPipeline : MonoBehaviour
     public void CreateFakeTextToSpeech(AudioClip fakeClip)
     {
         // TODO: will we need to assign a position, parent?
-        GameObject obj = Instantiate(speech2TextAIPrefab, null);
+        GameObject obj = Instantiate(text2SpeechAIPrefab, null);
         obj.name += "_FAKE";
         GroqTTS newTTS = obj.GetComponent<GroqTTS>();
         newTTS.SetClip(fakeClip);
@@ -132,7 +136,7 @@ public class AIPipeline : MonoBehaviour
     public async Task CreateTextToSpeech(PlayAIVoice aiVoice, string prompt, Transform parent)
     {
         // TODO: will we need to assign a position, parent?
-        GameObject obj = Instantiate(speech2TextAIPrefab, parent);
+        GameObject obj = Instantiate(text2SpeechAIPrefab, parent);
         GroqTTS groqTTS = obj.GetComponent<GroqTTS>();
 
         // NOTE: Fake TTS
@@ -145,7 +149,7 @@ public class AIPipeline : MonoBehaviour
         }
 
         groqTTS.SetVoice(aiVoice);
-        groqTTS.SetStoreGeneratedWavFiles(storeSpeech2TextWavFiles);
+        groqTTS.SetStoreGeneratedWavFiles(storetext2SpeechWavFiles);
         var newTTS = await groqTTS.GenerateAndPlaySpeech(prompt);
         if (newTTS != null)
         {
@@ -177,14 +181,14 @@ public class AIPipeline : MonoBehaviour
         );
     }
 
-    private void SetLastGeneratedImage(Texture2D newImage)
+    private void SetLastGeneratedImage(GenerateTextToImageOutputModel newImage)
     {
-        lastGeneratedImage = newImage;
+        lastGeneratedImage = newImage.texture;
     }
 
-    private void SetLastGeneratedImage(List<Texture2D> newImages)
+    private void SetLastGeneratedImage(List<GenerateTextToImageOutputModel> newImages)
     {
-        lastGeneratedImage = newImages.FirstOrDefault();
+        lastGeneratedImage = newImages.FirstOrDefault().texture;
     }
 
     #endregion

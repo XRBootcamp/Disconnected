@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using Runware;
 using UnityEngine;
 
 /// <summary>
@@ -85,7 +87,7 @@ public static class AIClientFakes
         return false;
     }
 
-    public static bool TryHandleFakeTTI(AIClientToggle toggle, Action<Texture2D> onFake)
+    public static bool TryHandleFakeTTI(AIClientToggle toggle, Action<GenerateTextToImageOutputModel> onFake)
     {
 #if !UNITY_EDITOR
         return false;
@@ -104,8 +106,9 @@ public static class AIClientFakes
         var fake = ListExtension.GetRandomEntry(toggle.ttiFakeOutputs);
         if (fake != null)
         {
+            GenerateTextToImageOutputModel outputFake = new(imagePath: $"Assets/ImaginaryPlace/{fake.name}", texture: fake );
             Debug.Log("Text-to-Image in TEST Mode (using fake texture)");
-            onFake?.Invoke(fake);
+            onFake?.Invoke(outputFake);
             return true;
         }
 

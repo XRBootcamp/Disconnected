@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using GroqApiLibrary;
-using NaughtyAttributes;
+using Sirenix.OdinInspector;
 
 public class GroqChat : MonoBehaviour
 {

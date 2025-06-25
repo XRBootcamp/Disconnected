@@ -7,9 +7,10 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-// NOTE: JsonSerializer.Serialize either requires: all values {get ; set; }, or the attribute [JsonInclude] in every field that is to be included in the Serialize
+// NOTE: JsonSerializer.Serialize either requires: all values {get ; set; }, or the attribute in every field that is to be included in the Serializ {get; set;}
 namespace Runware
 {
+
     public enum OutputType
     {
         URL = 0,
@@ -33,33 +34,47 @@ namespace Runware
     }
 
     [Serializable]
-    // NOTE: according to documentation: https://runware.ai/docs/en/getting-started/how-to-connect
+    public class GenerateTextToImageOutputModel
+    {
+        public string imagePath {get; set;}
+        public Texture2D texture {get; set;}
 
+        public GenerateTextToImageOutputModel(string imagePath, Texture2D texture)
+        {
+            this.imagePath = imagePath;
+            this.texture = texture;
+        }
+    }
+
+    [Serializable]
+    // NOTE: according to documentation: https://runware.ai/docs/en/getting-started/how-to-connect
     public class TextToImageRequestModel
     {
-        [JsonInclude] public string taskType = "imageInference";
-        [JsonInclude] public string taskUUID;
-        [JsonInclude] public string positivePrompt;
-        [JsonInclude] public string model;
-        [JsonInclude] public string outputType;
-        [JsonInclude] public string outputFormat;
-        [JsonInclude] public int height;
-        [JsonInclude] public int width;
-        [JsonInclude] public int numberResults; // default: 1
-        [JsonInclude] public bool? includeCost = true; // set as default so we always know
+        public string taskType {get; set;} = "imageInference";
+        public string taskUUID {get; set;}
+        public string positivePrompt {get; set;}
+        public string model {get; set;}
+        public string outputType {get; set;}
+        public string outputFormat {get; set;}
+        public int height {get; set;}
+        public int width {get; set;}
+        public int numberResults {get; set;} // default: 1
+        public TextToImageRequestAdvancedFeatures advancedFeatures {get; set;} = null;
+        public bool? includeCost {get; set;} = true; // set as default so we always know
 
-        [JsonInclude] public bool? checkNSFW;
-        
-        [CanBeNull] [JsonInclude] public string negativePrompt;
+        public bool? checkNSFW {get; set;}
 
-        [JsonInclude] public int? steps; // default: recommended by model, if none - whatever runware defines as default
-        [JsonInclude] public double? CFGScale; // default: recommended by model, if none - whatever runware defines as default
+        [CanBeNull]public string negativePrompt {get; set;}
+
+        public int? steps {get; set;} // default: recommended by model, if none - whatever runware defines as default
+        public double? CFGScale {get; set;} // default: recommended by model, if none - whatever runware defines as default
 
         public TextToImageRequestModel(
             string prompt,
             TextToImageAIModel model,
             OutputType type,
             ImageExtensions format,
+            bool alphaIsTransparency,
             int height = 1024,
             int width = 1024,
             int numberResults = 1,
@@ -78,6 +93,13 @@ namespace Runware
             this.height = RunwareExtensions.ValidateDivisibleBy64(height);
             this.width = RunwareExtensions.ValidateDivisibleBy64(width);
             this.numberResults = numberResults;
+
+            // We want transparency supported only if we set transparency, and model supports it
+            if (alphaIsTransparency && model.SupportsTransparency())
+            {
+                this.advancedFeatures = new TextToImageRequestAdvancedFeatures();
+                this.advancedFeatures.layerDiffuse = true;
+            }
 
             if (model.SupportsNegativePrompt())
             {
@@ -112,6 +134,8 @@ namespace Runware
             {
                 this.CFGScale = defaultModelCFGScale;
             }
+
+
         }
 
         /// <summary>
@@ -139,42 +163,57 @@ namespace Runware
     }
 
 
+    // TODO: if alpha is enabled, add this to TextToImageRequestModel
+    // https://runware.ai/docs/en/image-inference/api-reference#request-advancedfeatures
+    /**
+     *  "advancedFeatures": {
+            "layerDiffuse": true
+        },
+     * 
+     */
+
+    [Serializable]
+    public class TextToImageRequestAdvancedFeatures
+    {
+        public bool layerDiffuse {get; set;}
+    }
+
 
     [Serializable]
     public class TextToImageResponseDataArrayModel
     {
-        [JsonInclude] public List<TextToImageResponseModel> data;
+        public List<TextToImageResponseModel> data {get; set;}
     }
 
     [Serializable]
     public class TextToImageResponseModel
     {
-        [JsonInclude] public string taskType;
-        [JsonInclude] public string imageUUID;
-        [JsonInclude] public string taskUUID;
-        [JsonInclude] public double cost;
-        [JsonInclude] public long seed;
-        [JsonInclude] public string imageURL;
-        [JsonInclude] public string imageBase64Data;
-        [JsonInclude] public string positivePrompt;
-        [JsonInclude] public bool? NSFWContent;
+        public string taskType {get; set;}
+        public string imageUUID {get; set;}
+        public string taskUUID {get; set;}
+        public double cost {get; set;}
+        public long seed {get; set;}
+        public string imageURL {get; set;}
+        public string imageBase64Data {get; set;}
+        public string positivePrompt {get; set;}
+        public bool? NSFWContent {get; set;}
     }
 
 
     [Serializable]
     public class ErrorResponseArrayModel
     {
-        [JsonInclude] public List<ErrorResponseModel> errors;
+        public List<ErrorResponseModel> errors {get; set;}
     }
 
     [Serializable]
     public class ErrorResponseModel
     {
-        [JsonInclude] public string code;
-        [JsonInclude] public string message;
-        [JsonInclude] public string parameter;
-        [JsonInclude] public string type;
-        [JsonInclude] public string taskType;
+        public string code {get; set;}
+        public string message {get; set;}
+        public string parameter {get; set;}
+        public string type {get; set;}
+        public string taskType {get; set;}
     }
 
 }

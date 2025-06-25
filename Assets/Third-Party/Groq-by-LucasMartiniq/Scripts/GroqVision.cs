@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Collections;
 using GroqApiLibrary;
-using NaughtyAttributes; // Ensure it's Unity-compatible
+using Sirenix.OdinInspector;
 
 public class GroqVision : MonoBehaviour
 {

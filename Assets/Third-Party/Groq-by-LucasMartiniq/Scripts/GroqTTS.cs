@@ -1,9 +1,10 @@
-﻿using NaughtyAttributes;
+﻿using Sirenix.OdinInspector;
 using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 
 public enum PlayAIVoice
 {
@@ -39,17 +40,24 @@ public enum PlayAIVoice
 public class GroqTTS : MonoBehaviour
 {
     [SerializeField] private FileEnumPath storeGeneratedWavFiles;
-    [SerializeField] private AudioSource audioSource;
+    [SerializeField] public AudioSource audioSource;
 
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
-    
+
     private const string model = "playai-tts";
     [SerializeField] private PlayAIVoice selectedVoice = PlayAIVoice.Fritz_PlayAI;
+    // Add a virtual property
+    protected virtual PlayAIVoice SelectedVoice
+    {
+        get => selectedVoice;
+        set => selectedVoice = value;
+    }
     private const string responseFormat = "wav";
     [SerializeField] private string prompt = "I love building and shipping new features for our students!";
 
+    public UnityEvent onCompletedTTS;
 
-    public bool IsGenerated {get; private set;}
+    public bool HasFinishedGeneratingClip { get; private set; }
 
     [Button]
     private async void Generate()
@@ -70,12 +78,12 @@ public class GroqTTS : MonoBehaviour
             return;
         }
 
-        var json = $"{{\"model\":\"{model}\",\"voice\":\"{GetVoiceName(selectedVoice)}\",\"input\":\"{text}\",\"response_format\":\"{responseFormat}\"}}";
+        var json = $"{{\"model\":\"{model}\",\"voice\":\"{GetVoiceName(SelectedVoice)}\",\"input\":\"{text}\",\"response_format\":\"{responseFormat}\"}}";
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         try
         {
-            IsGenerated = false;
+            HasFinishedGeneratingClip = false;
 
             var response = await APIKeyLoader.Instance.GroqHttpClient.PostAsync(apiUrl, content);
 
@@ -97,7 +105,9 @@ public class GroqTTS : MonoBehaviour
                 SavWav.Save(filePath, clip, false);
             }
             prompt = text;
-            IsGenerated = true;
+            HasFinishedGeneratingClip = true;
+
+            onCompletedTTS.Invoke();
         }
         catch (Exception ex)
         {
@@ -113,7 +123,7 @@ public class GroqTTS : MonoBehaviour
     public async Task<GroqTTS> GenerateAndPlaySpeech(string text)
     {
         await GenerateTTS(text);
-        if (IsGenerated)
+        if (HasFinishedGeneratingClip)
         {
             audioSource.Play();
             return this;
@@ -162,7 +172,7 @@ public class GroqTTS : MonoBehaviour
 
     public void SetVoice(PlayAIVoice newVoice)
     {
-        selectedVoice = newVoice;
+        SelectedVoice = newVoice;
     }
 
     public void SetPrompt(string newPrompt)
@@ -178,15 +188,16 @@ public class GroqTTS : MonoBehaviour
     [Button]
     public void StopAudio()
     {
-        if (!IsGenerated) return;
+        if (!HasFinishedGeneratingClip) return;
         audioSource.Stop();
     }
 
     [Button]
     public void PlayAudio()
     {
-        if (!IsGenerated) return;
+        if (!HasFinishedGeneratingClip) return;
         audioSource.Play();
+        
     }
 
     public void SetClip(AudioClip newClip)
@@ -197,7 +208,7 @@ public class GroqTTS : MonoBehaviour
 #if UNITY_EDITOR
     public void ForceIsGenerated()
     {
-        IsGenerated = true;
+        HasFinishedGeneratingClip = true;
     }
 #endif
 }

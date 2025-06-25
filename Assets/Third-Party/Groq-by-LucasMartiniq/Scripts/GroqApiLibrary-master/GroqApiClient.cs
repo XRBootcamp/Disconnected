@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using Unity.Android.Gradle;
 
 namespace GroqApiLibrary
 {
@@ -349,7 +350,8 @@ namespace GroqApiLibrary
             return responseJson;
         }
 
-        public async Task<string> RunConversationWithToolsAsync(string userPrompt, List<Tool> tools, string model, string systemMessage)
+        public async Task<string> RunConversationWithToolsAsync<TTool>(string userPrompt, List<TTool> tools, string model, string systemMessage)
+            where TTool : ITool
         {
             try
             {
@@ -465,8 +467,6 @@ namespace GroqApiLibrary
                 throw new ArgumentException("Invalid image URL format");
         }
 
-
-
         public void Dispose()
         {
             _httpClient.Dispose();
@@ -474,18 +474,62 @@ namespace GroqApiLibrary
         }
     }
 
+    public interface ITool
+    {
+        string Type { get; }
+        IFunction Function { get; }
+    }
 
-    public class Tool
+    public interface IFunction
+    {
+        string Name { get; }
+        string Description { get; }
+        object Parameters { get; }
+        Func<string, Task<string>> ExecuteAsync { get; }
+    }
+
+    public class Tool : ITool
     {
         public string Type { get; set; } = "function";
         public Function Function { get; set; }
+        IFunction ITool.Function => Function;
     }
 
-    public class Function
+    public class Function : IFunction
     {
         public string Name { get; set; }
         public string Description { get; set; }
         public JsonObject Parameters { get; set; }
         public Func<string, Task<string>> ExecuteAsync { get; set; }
+        object IFunction.Parameters => Parameters;
+    }
+
+    public class ExtendedTool : ITool
+    {
+        public string Type { get; set; } = "function";
+        public ExtendedFunction Function { get; set; }
+        IFunction ITool.Function => Function;
+    }
+
+    public class ExtendedFunction : IFunction
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public Parameters Parameters { get; set; }
+        public Func<string, Task<string>> ExecuteAsync { get; set; }
+        object IFunction.Parameters => Parameters;
+    }
+
+    public class Parameters
+    {
+        public string Type { get; set; }
+        public Dictionary<string, Property> Properties {get; set;}
+        public string[] Required {get; set;}
+    }
+
+    public class Property
+    {
+        public string Type {get; set;}
+        public string Description {get; set;}
     }
 }
