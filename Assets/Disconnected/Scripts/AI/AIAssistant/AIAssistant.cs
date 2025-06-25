@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Runware;
 using UnityEngine;
 using UnityEngine.Events;
-using NaughtyAttributes;
+using Sirenix.OdinInspector;
 using UnityEditor;
 using TMPro;
 using System.Linq;

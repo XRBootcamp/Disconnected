@@ -1,5 +1,5 @@
 using GroqApiLibrary;
-using NaughtyAttributes;
+using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using System.Text.Json;
 using UnityEngine;

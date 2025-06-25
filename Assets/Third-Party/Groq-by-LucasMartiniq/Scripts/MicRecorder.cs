@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.IO;
-using NaughtyAttributes;
+using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine.Events;
 

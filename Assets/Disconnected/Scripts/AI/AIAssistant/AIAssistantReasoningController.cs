@@ -140,22 +140,4 @@ public class AIAssistantReasoningController : GroqReasoningService
             }
         };
     }
-
-    // Add more project-specific or overridable methods as needed
-    /*
-                ExecuteAsync = async (args) =>
-                {
-                    var jsonArgs = JsonDocument.Parse(args);
-                    var text2ImageResponse = JsonSerializer.Deserialize<AIAssistantText2ImageResponseModel>(jsonArgs.RootElement);
-
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                    {
-                        // TODO: convert this to my data model and upload stuff
-                        currentResponse = text2ImageResponse;
-                        //currentCompiler = text2ImageResponse.ToPromptCompiler();
-                    });
-
-                    return JsonSerializer.Serialize(new { result = $"{text2ImageResponse.assistantResponse}" });
-                }
-    */
 }
