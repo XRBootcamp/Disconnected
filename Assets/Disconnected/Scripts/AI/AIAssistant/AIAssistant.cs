@@ -36,7 +36,7 @@ public class AIAssistant : MonoBehaviour
     [SerializeField] private GroqTTS textToSpeechAI;
     [SerializeField] private RunwareTTI textToImageAI;
 
-    private SF3DAPIClient imageTo3DAI;
+    [SerializeField] private SF3DAPIClient imageTo3DAI;
 
     [Space]
     [Header("AI Reasoning")]
@@ -218,8 +218,8 @@ public class AIAssistant : MonoBehaviour
             // this is just a shitty way to get the list of GameObjects created
             var modelTasks = new List<Task<GameObject>>();
 
-            // Add text-to-speech task
-            tasks.Add(textToSpeechAI.GenerateAndPlaySpeech(assistantResponse));
+            // Add text-to-speech task - not storing since it is the assistant talking
+            tasks.Add(textToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None));
 
             // Add all 3D model generation tasks and collect their results
             foreach (var image in imageResults)
@@ -299,7 +299,7 @@ public class AIAssistant : MonoBehaviour
             string assistantResponse = jsonModel.assistantResponse;
 
             var returnString = JsonSerializer.Serialize(jsonModel);
-            await textToSpeechAI.GenerateAndPlaySpeech(assistantResponse);
+            await textToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None);
 
             Debug.Log($"[{nameof(AIAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} Completed!!!");
 

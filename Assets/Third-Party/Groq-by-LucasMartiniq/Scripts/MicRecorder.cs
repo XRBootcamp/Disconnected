@@ -3,6 +3,7 @@ using System.IO;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine.Events;
+using System;
 
 public class MicRecorder : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class MicRecorder : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[MicRecorder] Failed to register with MicRecorderManager: {ex.Message}");
+            Debug.LogError($"[{nameof(MicRecorder)}] Failed to register with MicRecorderManager: {ex.Message}");
         }
     }
 
@@ -44,7 +45,7 @@ public class MicRecorder : MonoBehaviour
         // Request permission from MicRecorderManager
         if (!MicRecorderManager.Instance.RequestStartRecording(this))
         {
-            Debug.LogWarning($"[MicRecorder] Recording blocked - another recorder is already active");
+            Debug.LogWarning($"[{nameof(MicRecorder)}] Recording blocked - another recorder is already active");
             return;
         }
 
@@ -55,12 +56,20 @@ public class MicRecorder : MonoBehaviour
         Debug.Log("Recording...");
     }
 
+    /// <summary>
+    /// Method that stops recording, sets audioclip and tries to save it (setting filePath)
+    /// </summary>
+    /// <param name="invokeOnRecordedAudio">Triggers on Recorded Audio event if true</param>
+    /// <param name="saveClipInRootPath">If != None, then it will save in persistent or temporaryPath. Note we should always save to run speech-to-text AI. Default: temporary</param>
+    /// <param name="relativePath">Relative path (folder). Ignored if saveClipInRootPath = None.</param>
+    /// <param name="filename">Filename base. Ignored if saveClipInRootPath = None.</param>
+    /// <param name="appendDateTimeToFileName">If true, adds DataTime to filename for differentiation. Ignored if saveClipInRootPath = None.</param>
     [Button]
-    public virtual void StopAndSave(bool invokeOnRecordedAudio = true)
+    public virtual void StopAndSave(bool invokeOnRecordedAudio = true, FileEnumPath saveClipInRootPath = FileEnumPath.Temporary, string relativePath = "Recordings", string filename = "recorded_audio", bool appendDateTimeToFileName = true)
     {
         if (!isRecording)
         {
-            Debug.LogWarning("[MicRecorder] Attempted to stop recording when not recording");
+            Debug.LogWarning($"[{nameof(MicRecorder)}] Attempted to stop recording when not recording");
             return;
         }
 
@@ -73,19 +82,11 @@ public class MicRecorder : MonoBehaviour
 
         Debug.Log("Recording stopped.");
 
-        SaveWav("recorded_audio", recordedClip);
+        // storing filePath
+        filePath = recordedClip.TrySaveWav(saveClipInRootPath, relativePath, filename, appendDateTimeToFileName, $"{nameof(MicRecorder)} {nameof(StopAndSave)}");
 
         if (invokeOnRecordedAudio)
             onRecordedAudio.Invoke(recordedClip);
-    }
-
-    protected virtual void SaveWav(string filename, AudioClip clip)
-    {
-        filePath = Path.Combine(Application.persistentDataPath, filename + ".wav");
-        if (SavWav.Save(filename, clip, true))
-        {
-            Debug.Log("Saved WAV to: " + filePath);
-        }
     }
 
     void Update()
@@ -100,7 +101,7 @@ public class MicRecorder : MonoBehaviour
                 hasTriggeredOverRecord = true;
                 StopAndSave(false);
                 onDurationPassed.Invoke(recordedClip);
-                Debug.LogWarning($"[MicRecorder] Recording exceeded duration limit of {duration} seconds!");
+                Debug.LogWarning($"[{nameof(MicRecorder)}] Recording exceeded duration limit of {duration} seconds!");
             }
         }
     }
@@ -160,7 +161,7 @@ public class MicRecorder : MonoBehaviour
     {
         if (newDuration <= 0)
         {
-            Debug.LogWarning("[MicRecorder] Duration must be greater than 0 seconds");
+            Debug.LogWarning("[{nameof(MicRecorder)}] Duration must be greater than 0 seconds");
             return;
         }
 
@@ -172,7 +173,7 @@ public class MicRecorder : MonoBehaviour
         int oldDuration = duration;
         duration = newDuration;
 
-        Debug.Log($"[MicRecorder] Duration updated from {oldDuration}s to {duration}s");
+        Debug.Log($"[{nameof(MicRecorder)}] Duration updated from {oldDuration}s to {duration}s");
     }
 
     /// <summary>
@@ -211,7 +212,7 @@ public class MicRecorder : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning($"[MicRecorder] Failed to unregister from MicRecorderManager: {ex.Message}");
+            Debug.LogWarning($"[{nameof(MicRecorder)}] Failed to unregister from MicRecorderManager: {ex.Message}");
         }
 
         // Clean up events

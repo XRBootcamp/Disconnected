@@ -10,6 +10,7 @@ using System.Reflection;
 public class GroqFilteredTTS : GroqTTS
 {
     [SerializeField]
+    // ExclusedReserved is a property to garantee that the narrator voice is never taken in TTS
     [ExcludeReserved]  // So clean!
     private PlayAIVoice filteredSelectedVoice = PlayAIVoice.Fritz_PlayAI;
     protected override PlayAIVoice SelectedVoice

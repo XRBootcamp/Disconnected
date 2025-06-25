@@ -126,7 +126,6 @@ public class AIPipeline : MonoBehaviour
         GroqTTS newTTS = obj.GetComponent<GroqTTS>();
         newTTS.SetClip(fakeClip);
         newTTS.SetPrompt($"{obj.name} - FAKE PROMPT");
-        newTTS.SetStoreGeneratedWavFiles(FileEnumPath.None); // do not store fake files
         newTTS.ForceIsGenerated();
 
         newTTS.PlayAudio();
@@ -149,8 +148,7 @@ public class AIPipeline : MonoBehaviour
         }
 
         groqTTS.SetVoice(aiVoice);
-        groqTTS.SetStoreGeneratedWavFiles(storetext2SpeechWavFiles);
-        var newTTS = await groqTTS.GenerateAndPlaySpeech(prompt);
+        var newTTS = await groqTTS.GenerateAndPlaySpeech(prompt, saveClipInRootPath: storetext2SpeechWavFiles);
         if (newTTS != null)
         {
             listOfGeneratedGroqTTS.Add(newTTS);
