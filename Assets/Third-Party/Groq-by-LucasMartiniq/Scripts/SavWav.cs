@@ -28,32 +28,20 @@ using System;
 using System.IO;
 using UnityEngine;
 using System.Collections.Generic;
+using System.IO.Enumeration;
 
 public static class SavWav
 {
 
 	const int HEADER_SIZE = 44;
 
-	public static bool Save(string filename, AudioClip clip, bool overwritePath = true)
+	public static bool Save(string filepath, AudioClip clip)
 	{
-		if (!filename.ToLower().EndsWith(".wav"))
+		if (!filepath.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
 		{
-			filename += ".wav";
+			filepath += ".wav";
 		}
-		string filepath = "";
-		if (overwritePath) // overwrites whatever the path was written into persistent
-		{
-			// TODO: clean up if other application styles
-			string relativeFilename = filename.Replace(Application.temporaryCachePath, string.Empty).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-			filepath = Path.Combine(Application.persistentDataPath, filename);
-
-			Debug.Log($"[{(nameof(SavWav))} - Save] overwrite data path to: {filepath}");
-		}
-		else 
-		{
-			filepath = filename;
-		}
+		//string filepath = FileManagementExtensions.GenerateFilePath(appPath: rootPath, relativePath: relativePath, fileName: filename, extension: FileExtensions.WAV.ToLower(), appendDateTime: appendDateTimeToFileName);
 
 		// Make sure directory exists if user is saving to sub dir.
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));

@@ -3,6 +3,7 @@ using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -39,7 +40,6 @@ public enum PlayAIVoice
 
 public class GroqTTS : MonoBehaviour
 {
-    [SerializeField] private FileEnumPath storeGeneratedWavFiles;
     [SerializeField] public AudioSource audioSource;
 
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
@@ -60,17 +60,33 @@ public class GroqTTS : MonoBehaviour
     public bool HasFinishedGeneratingClip { get; private set; }
 
     [Button]
-    private async void Generate()
+    private async void GenerateWithoutSaving()
     {
-        await GenerateAndPlaySpeech(prompt);
+        await GenerateAndPlaySpeech(prompt, FileEnumPath.None);
+    }
+
+    [Button]
+    private async void GenerateSavingInTemp()
+    {
+        await GenerateAndPlaySpeech(prompt, FileEnumPath.Temporary, FilePaths.TEXT_TO_SPEECH, "tts-temp", true);
+    }
+
+    [Button]
+    private async void GenerateSavingInPersistent()
+    {
+        await GenerateAndPlaySpeech(prompt, FileEnumPath.Persistent, FilePaths.TEXT_TO_SPEECH, "tts-pers", true);
     }
 
     /// <summary>
-    /// Generates TTS audio from the given text, but does not play it. Sets IsGenerated and audioSource.clip.
+    /// Generates TTS audio from the given text, but does not play it. Sets IsGenerated and audioSource.clip. 
     /// </summary>
-    /// <param name="text">The text to synthesize.</param>
+    /// <param name="text">The text to synthesize and play</param>
+    /// <param name="saveClipInRootPath">If != None, then it will save in persistent or temporaryPath</param>
+    /// <param name="relativePath">Relative path (folder). Ignored if saveClipInRootPath = None.</param>
+    /// <param name="filename">Filename base. Ignored if saveClipInRootPath = None.</param>
+    /// <param name="appendDateTimeToFileName">If true, adds DataTime to filename for differentiation. Ignored if saveClipInRootPath = None.</param>
     /// <returns>Task</returns>
-    public async Task GenerateTTS(string text)
+    public async Task GenerateTTS(string text, FileEnumPath saveClipInRootPath, string relativePath = "TtS", string filename = "tts", bool appendDateTimeToFileName = true)
     {
         if (APIKeyLoader.Instance == null)
         {
@@ -99,11 +115,9 @@ public class GroqTTS : MonoBehaviour
 
             AudioClip clip = CreateClipFromWav(audioData);
             audioSource.clip = clip;
-            if (storeGeneratedWavFiles != FileEnumPath.None)
-            {
-                string filePath = FileManagementExtensions.GenerateFilePath(storeGeneratedWavFiles, FilePaths.TEXT_TO_SPEECH, "tts", FileExtensions.WAV, true);
-                SavWav.Save(filePath, clip, false);
-            }
+
+            string wavFilepath = clip.TrySaveWav(saveClipInRootPath, relativePath, filename, appendDateTimeToFileName, $"{nameof(GroqTTS)} - {nameof(GenerateTTS)}");
+
             prompt = text;
             HasFinishedGeneratingClip = true;
 
@@ -115,14 +129,19 @@ public class GroqTTS : MonoBehaviour
         }
     }
 
+
     /// <summary>
-    /// Generates TTS audio and plays it if successful.
+    /// Generates TTS audio and plays it if successful. 
     /// </summary>
-    /// <param name="text">The text to synthesize and play.</param>
-    /// <returns>Task</returns>
-    public async Task<GroqTTS> GenerateAndPlaySpeech(string text)
+    /// <param name="text">The text to synthesize and play</param>
+    /// <param name="saveClipInRootPath">If != None, then it will save in persistent or temporaryPath</param>
+    /// <param name="relativePath">Relative path (folder). Ignored if saveClipInRootPath = None.</param>
+    /// <param name="filename">Filename base. Ignored if saveClipInRootPath = None.</param>
+    /// <param name="appendDateTimeToFileName">If true, adds DataTime to filename for differentiation. Ignored if saveClipInRootPath = None.</param>
+    /// <returns>Task - itself</returns>
+    public async Task<GroqTTS> GenerateAndPlaySpeech(string text, FileEnumPath saveClipInRootPath, string relativePath = "TtS", string filename = "tts", bool appendDateTimeToFileName = true)
     {
-        await GenerateTTS(text);
+        await GenerateTTS(text, saveClipInRootPath, relativePath, filename, appendDateTimeToFileName);
         if (HasFinishedGeneratingClip)
         {
             audioSource.Play();
@@ -130,7 +149,7 @@ public class GroqTTS : MonoBehaviour
         }
         return null;
     }
-
+    
     private string GetVoiceName(PlayAIVoice voice)
     {
         return voice.ToString().Replace('_', '-');
@@ -180,11 +199,6 @@ public class GroqTTS : MonoBehaviour
         prompt = newPrompt;
     }
 
-    public void SetStoreGeneratedWavFiles(FileEnumPath newEnum)
-    {
-        storeGeneratedWavFiles = newEnum;
-    }
-
     [Button]
     public void StopAudio()
     {
@@ -197,7 +211,7 @@ public class GroqTTS : MonoBehaviour
     {
         if (!HasFinishedGeneratingClip) return;
         audioSource.Play();
-        
+
     }
 
     public void SetClip(AudioClip newClip)

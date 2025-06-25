@@ -32,12 +32,12 @@ public static class FileManagementExtensions
             Debug.LogError("FileManagementExtensions.GenerateFilePath ERROR - basePath or fileName is null or empty");
             return null;
         }
-        string name = $"{fileName}.{extension}";
+        string name = $"{fileName}.{extension.ToLower()}";
         if (appendDateTime)
         {
             string timeOfCreation = DateTime.Now.ToString("yyyyMMdd-HHmmss");
             string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-            name = $"{nameWithoutExt}_{timeOfCreation}.{extension}";
+            name = $"{nameWithoutExt}_{timeOfCreation}.{extension.ToLower()}";
         }
         string fullPath = string.IsNullOrEmpty(relativePath)
             ? Path.Combine(basePath, name)

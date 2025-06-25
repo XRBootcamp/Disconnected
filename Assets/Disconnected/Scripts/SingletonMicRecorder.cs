@@ -23,36 +23,4 @@ public class SingletonMicRecorder : MicRecorder
         DontDestroyOnLoad(gameObject);
     }
 
-    /// <summary>
-    /// Save the recorded audio as a WAV file in the temporary cache path.
-    /// </summary>
-    /// <param name="filename">The base filename (without extension).</param>
-    /// <param name="clip">The AudioClip to save.</param>
-    protected override void SaveWav(string filename, AudioClip clip)
-    {
-        if (clip == null)
-        {
-            Debug.LogError("No audio clip to save.");
-            return;
-        }
-
-        string newFilePath = FileManagementExtensions.GenerateFilePath(FileEnumPath.Temporary, FilePaths.MIC_RECORDINGS, filename, FileExtensions.WAV, true);
-        try
-        {
-            if (SavWav.Save(newFilePath, clip, false))
-            {
-                Debug.Log($"Saved WAV to temp: {newFilePath}");
-                base.filePath = newFilePath; // Use protected field from base
-            }
-            else
-            {
-                Debug.LogError("Failed to save WAV to temp.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Error saving WAV to temp: {ex.Message}");
-        }
-    }
-
 }
