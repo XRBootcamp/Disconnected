@@ -1,11 +1,11 @@
 using UnityEngine;
-using NaughtyAttributes;
 using Unity.Collections;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Runware;
 using System.Linq;
+using Sirenix.OdinInspector;
 
 public class AIPipeline : MonoBehaviour
 {
@@ -181,14 +181,14 @@ public class AIPipeline : MonoBehaviour
         );
     }
 
-    private void SetLastGeneratedImage(Texture2D newImage)
+    private void SetLastGeneratedImage(GenerateTextToImageOutputModel newImage)
     {
-        lastGeneratedImage = newImage;
+        lastGeneratedImage = newImage.texture;
     }
 
-    private void SetLastGeneratedImage(List<Texture2D> newImages)
+    private void SetLastGeneratedImage(List<GenerateTextToImageOutputModel> newImages)
     {
-        lastGeneratedImage = newImages.FirstOrDefault();
+        lastGeneratedImage = newImages.FirstOrDefault().texture;
     }
 
     #endregion

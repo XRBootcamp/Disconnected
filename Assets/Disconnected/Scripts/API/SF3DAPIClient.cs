@@ -3,18 +3,19 @@ using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using Siccity.GLTFUtility;
+using GLTFast;
 using UnityEditor;
 
 public class SF3DAPIClient : IDisposable
 {
-    [Header("Stable Fast 3D API Settings")]
     private const string apiUrl = "https://api.stability.ai/v2beta/3d/stable-fast-3d";
     private string apiKey = "YOUR_API_KEY";
+    private string unityEditorPrefabDirectory = "Assets/GeneratedPrefabs/";
 
-    public SF3DAPIClient(string newApiKey)
+    public SF3DAPIClient(string newApiKey, string prefabDirectory = null)
     {
         apiKey = newApiKey;
+        this.unityEditorPrefabDirectory = prefabDirectory ?? this.unityEditorPrefabDirectory;
     }
 
     /// <summary>
@@ -22,9 +23,13 @@ public class SF3DAPIClient : IDisposable
     /// </summary>
     /// <param name="imagePath">Path to the input image file.</param>
     /// <param name="outputPath">Path to save the generated GLB model file.</param>
-    /// <param name="prefabPath">Path to save the generated prefab.</param>
     /// <param name="parent">Parent transform for the loaded model.</param>
-    public async Task<GameObject> Generate3DModelAsync(string imagePath, string outputPath, string prefabPath, Transform parent)
+    public async Task<GameObject> Generate3DModelAsync(
+        string imagePath,
+        string filename,
+        FileEnumPath fileEnumPath,
+        System.Action<GameObject> onModelLoaded,
+        Transform parent = null)
     {
         if (!File.Exists(imagePath))
         {
@@ -34,7 +39,7 @@ public class SF3DAPIClient : IDisposable
 
         byte[] imageBytes = File.ReadAllBytes(imagePath);
         WWWForm form = new WWWForm();
-        form.AddBinaryData("image", imageBytes, Path.GetFileName(imagePath), "image/png");
+        form.AddBinaryData("image", imageBytes, Path.GetFileName(imagePath), $"image/{Path.GetExtension(imagePath).ToLower()}");//"image/png");
 
         using (UnityWebRequest request = UnityWebRequest.Post(apiUrl, form))
         {
@@ -51,11 +56,29 @@ public class SF3DAPIClient : IDisposable
             {
                 byte[] responseData = request.downloadHandler.data;
                 Debug.Log("3D model generated successfully!");
-                SaveModelToFile(responseData, outputPath);
-                GameObject loadedModel = LoadModel(outputPath, parent);
-#if UNITY_EDITOR
-                SavePrefab(loadedModel, prefabPath);
-#endif
+
+                // Moved filePath and saving to the extension functions to always save in quest
+                string filePath = FileManagementExtensions.GenerateFilePath(
+                    appPath: fileEnumPath,
+                    fileName: filename,
+                    relativePath: FilePaths.IMAGE_TO_3D,
+                    extension: FileExtensions.GLB,
+                    appendDateTime: false
+                );
+
+                FileManagementExtensions.SaveInRootedDataPath(
+                    rootPath: filePath,
+                    relativePath: null,
+                    data: responseData
+                );
+
+                // Load Model from responseData
+                GameObject loadedModel = await LoadModel(
+                    modelPath: filePath,
+                    parentTransform: parent,
+                    onModelLoaded: onModelLoaded
+                );
+
                 return loadedModel;
             }
             else
@@ -66,55 +89,89 @@ public class SF3DAPIClient : IDisposable
         }
     }
 
-    // Save the model to a file
-    private void SaveModelToFile(byte[] modelData, string outputPath)
+    // Load the generated model using GLTFUtility
+    async Task<GameObject> LoadModel(string modelPath, Transform parentTransform, System.Action<GameObject> onModelLoaded)
     {
-        File.WriteAllBytes(outputPath, modelData);
-        Debug.Log($"3D model saved to: {outputPath}");
-    }
+        var gltf = new GltfImport();
 
-    // Load the model using GLTFUtility, set parent and localPosition
-    private GameObject LoadModel(string path, Transform parent)
-    {
-        if (File.Exists(path))
+        var success = await gltf.Load("file://" + modelPath);
+
+        if (success)
         {
-            GameObject loadedModel = Importer.LoadFromFile(path);
-            if (parent != null)
+            GameObject loadedModel = new GameObject(Path.GetFileNameWithoutExtension(modelPath));
+            // NOTE: unsure if I should do this here
+            //loadedModel.transform.SetParent(parentTransform);
+
+            success = await gltf.InstantiateMainSceneAsync(loadedModel.transform);
+
+            if (success)
             {
-                loadedModel.transform.SetParent(parent);
-                // TODO: adjust position later on
-                loadedModel.transform.localPosition = Vector3.zero;
+                Debug.Log("Model loaded into Unity.");
+
+                if (onModelLoaded != null)
+                {
+                    onModelLoaded?.Invoke(loadedModel);
+                }
+                
             }
-            // TODO: Add addressable classes
-            Debug.Log("Model loaded into Unity.");
+            else
+            {
+                Debug.LogError("glTFast instantiation failed.");
+                if (onModelLoaded != null)
+                {
+                    onModelLoaded?.Invoke(null);
+                }
+                
+            }
+            // Moved to AI Assistant
+/*
+#if UNITY_EDITOR
+            SavePrefab(loadedModel, loadedModel.name);
+#endif
+*/
             return loadedModel;
         }
         else
         {
-            Debug.LogError("GLB file not found at: " + path);
-            return null;
+            Debug.LogError("glTFast load failed.");
+            if (onModelLoaded != null)
+            {
+                onModelLoaded?.Invoke(null);
+            }
+            
         }
+        return null;
+    }
+
+    // TODO: review how things work - benjamin
+    // Save the model as a prefab at the given path
+    public void SavePrefab(GameObject model, string filename)
+    {
+#if UNITY_EDITOR
+        if (model != null)
+        {
+            // Ensure the prefab directory exists
+            if (!Directory.Exists(unityEditorPrefabDirectory))
+            {
+                Directory.CreateDirectory(unityEditorPrefabDirectory);
+            }
+            string filePath = Path.Combine(unityEditorPrefabDirectory, $"{filename}.prefab");
+            Debug.Log($"Prefab to be saved at: {filePath}");
+            PrefabUtility.SaveAsPrefabAsset(model, filePath);
+            Debug.Log($"Prefab saved to: {filePath}");
+        }
+        else
+        {
+            Debug.LogError("Cannot save prefab. Model is null.");
+        }
+#else
+            //Debug.Log($"[{nameof(SF3DAPIClient)}] - {nameof(SavePrefab)} - does not work in outside UnityEditor");
+#endif
+
     }
 
     public void Dispose()
     {
         GC.SuppressFinalize(this);
     }
-
-    // TODO: review how things work - benjamin
-#if UNITY_EDITOR
-    // Save the model as a prefab at the given path
-    private void SavePrefab(GameObject model, string prefabPath)
-    {
-        if (model != null)
-        {
-            PrefabUtility.SaveAsPrefabAsset(model, prefabPath);
-            Debug.Log($"Prefab saved to: {prefabPath}");
-        }
-        else
-        {
-            Debug.LogError("Cannot save prefab. Model is null.");
-        }
-    }
-#endif
 }

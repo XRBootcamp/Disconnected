@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-// NOTE: JsonSerializer.Serialize either requires: all values {get ; set; }, or the attribute [JsonInclude] in every field that is to be included in the Serialize
+// NOTE: JsonSerializer.Serialize either requires: all values {get ; set; }, or the attribute in every field that is to be included in the Serializ {get; set;}
 namespace Runware
 {
 
@@ -31,6 +31,19 @@ namespace Runware
     {
         Flux1KontextPro = 0, // bfl:3@1
         FluxDevRedux = 1     // runware:105@1
+    }
+
+    [Serializable]
+    public class GenerateTextToImageOutputModel
+    {
+        public string imagePath {get; set;}
+        public Texture2D texture {get; set;}
+
+        public GenerateTextToImageOutputModel(string imagePath, Texture2D texture)
+        {
+            this.imagePath = imagePath;
+            this.texture = texture;
+        }
     }
 
     [Serializable]
@@ -162,45 +175,45 @@ namespace Runware
     [Serializable]
     public class TextToImageRequestAdvancedFeatures
     {
-        [JsonInclude] public bool layerDiffuse;
+        public bool layerDiffuse {get; set;}
     }
 
 
     [Serializable]
     public class TextToImageResponseDataArrayModel
     {
-        [JsonInclude] public List<TextToImageResponseModel> data;
+        public List<TextToImageResponseModel> data {get; set;}
     }
 
     [Serializable]
     public class TextToImageResponseModel
     {
-        [JsonInclude] public string taskType;
-        [JsonInclude] public string imageUUID;
-        [JsonInclude] public string taskUUID;
-        [JsonInclude] public double cost;
-        [JsonInclude] public long seed;
-        [JsonInclude] public string imageURL;
-        [JsonInclude] public string imageBase64Data;
-        [JsonInclude] public string positivePrompt;
-        [JsonInclude] public bool? NSFWContent;
+        public string taskType {get; set;}
+        public string imageUUID {get; set;}
+        public string taskUUID {get; set;}
+        public double cost {get; set;}
+        public long seed {get; set;}
+        public string imageURL {get; set;}
+        public string imageBase64Data {get; set;}
+        public string positivePrompt {get; set;}
+        public bool? NSFWContent {get; set;}
     }
 
 
     [Serializable]
     public class ErrorResponseArrayModel
     {
-        [JsonInclude] public List<ErrorResponseModel> errors;
+        public List<ErrorResponseModel> errors {get; set;}
     }
 
     [Serializable]
     public class ErrorResponseModel
     {
-        [JsonInclude] public string code;
-        [JsonInclude] public string message;
-        [JsonInclude] public string parameter;
-        [JsonInclude] public string type;
-        [JsonInclude] public string taskType;
+        public string code {get; set;}
+        public string message {get; set;}
+        public string parameter {get; set;}
+        public string type {get; set;}
+        public string taskType {get; set;}
     }
 
 }

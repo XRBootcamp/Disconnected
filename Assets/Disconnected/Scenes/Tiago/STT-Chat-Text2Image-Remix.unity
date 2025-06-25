@@ -210,7 +210,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &70487071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -649,7 +649,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &455715064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -810,7 +810,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &693191778
 Transform:
   m_ObjectHideFlags: 0
@@ -1751,8 +1751,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   aiGameSettings: {fileID: 11400000, guid: 11fe254f538770f489bee5775b6f81af, type: 2}
   aiAssistantPrefab: {fileID: 8922837929681574246, guid: 044a68622a479eb45bfc1d3f08ce5c66, type: 3}
-  sessionPreferences:
-    imageArtStyle: 
   aiClientToggle: {fileID: 11400000, guid: 1cbfabbe33b28594f8880b522e0e42d6, type: 2}
 --- !u!1 &1411714650
 GameObject:
@@ -1770,7 +1768,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1411714651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1918,7 +1916,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!82 &1560544263
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2244,7 +2242,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1741711480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2624,14 +2622,14 @@ SceneRoots:
   - {fileID: 2099547245}
   - {fileID: 1172345323}
   - {fileID: 1382887323}
+  - {fileID: 1755887527833543847}
+  - {fileID: 1585150131}
   - {fileID: 693191778}
   - {fileID: 1411714653}
   - {fileID: 1741711481}
   - {fileID: 70487072}
   - {fileID: 616811674}
   - {fileID: 455715065}
-  - {fileID: 1755887527833543847}
-  - {fileID: 1585150131}
   - {fileID: 1195649106}
   - {fileID: 740432910}
   - {fileID: 1560544265}

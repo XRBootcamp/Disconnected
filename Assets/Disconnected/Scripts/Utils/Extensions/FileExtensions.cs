@@ -16,5 +16,6 @@ public static class FileExtensions
 {
     public static readonly string WAV = "wav";
     public static readonly string TXT = "txt";
+    public static readonly string GLB = "glb";
 
 }
