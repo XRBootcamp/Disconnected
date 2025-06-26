@@ -135,7 +135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &368783570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -165,6 +165,7 @@ Transform:
   - {fileID: 1927497719}
   - {fileID: 1392203367}
   - {fileID: 3405577494957771785}
+  - {fileID: 4504987246829797333}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &504060492
@@ -804,6 +805,106 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3405577494957771786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc3d3edba9bf4287a4856a5b00038dd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  guid: 
+--- !u!1001 &4504987246829797332
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 368783571}
+    m_Modifications:
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5443957155879469597, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      propertyPath: m_Name
+      value: ViveWaterPrefab
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5443957155879469597, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4504987246829797336}
+    - targetCorrespondingSourceObject: {fileID: 5443957155879469597, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4504987246829797335}
+  m_SourcePrefab: {fileID: 100100000, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+--- !u!4 &4504987246829797333 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4163873279699115677, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+  m_PrefabInstance: {fileID: 4504987246829797332}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4504987246829797334 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5443957155879469597, guid: a5fe45cefe664c141b09eb9dee953ad4, type: 3}
+  m_PrefabInstance: {fileID: 4504987246829797332}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4504987246829797335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4504987246829797334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1838e68f508488196648a06ce0b90e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourceType: 0
+  referenceKey: Vive_Water
+--- !u!114 &4504987246829797336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4504987246829797334}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc3d3edba9bf4287a4856a5b00038dd1, type: 3}
