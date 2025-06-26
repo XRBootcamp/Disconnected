@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Sirenix.OdinInspector;
@@ -7,7 +8,7 @@ public class AIAssistantManager : MonoBehaviour
 {
     [SerializeField] private AIGameSettings aiGameSettings;
     [SerializeField] private GameObject aiSpeechToImage3dAssistant;
-    [SerializeField] private GameObject speechToSpeechAssistant;
+    [SerializeField] private GameObject voiceCharactersAssistant;
 
     [Header("Prompt Overrides")]
     [SerializeField] private ImageSessionPreferences sessionPreferences;
@@ -66,11 +67,23 @@ public class AIAssistantManager : MonoBehaviour
     {
         // FIXME: assign position, rotation
         var obj = Instantiate(aiSpeechToImage3dAssistant);
-        BaseAIAssistant newAssistant = obj.GetComponent<BaseAIAssistant>();
+        AISpeechToImage3dAssistant newAssistant = obj.GetComponent<AISpeechToImage3dAssistant>();
         newAssistant.Initialize(aiGameSettings);
 
         assistantsList.Add(newAssistant);
-        newAssistant.onClosing.AddListener(RemoveChat);
+        newAssistant.onClosing.AddListener(RemoveAssistant);
+    }
+
+    [Button]
+    public void CreateNewVoice()
+    {
+        // FIXME: assign position, rotation
+        var obj = Instantiate(voiceCharactersAssistant);
+        AICharacterVoiceAssistant newAssistant = obj.GetComponent<AICharacterVoiceAssistant>();
+        newAssistant.Initialize(aiGameSettings);
+
+        assistantsList.Add(newAssistant);
+        newAssistant.onClosing.AddListener(RemoveAssistant);
     }
 
     public BaseAIAssistant.State SetStateAfterOnHold(BaseAIAssistant aiAssistant)
@@ -92,7 +105,7 @@ public class AIAssistantManager : MonoBehaviour
         }
     }
 
-    public void RemoveChat(BaseAIAssistant toDelete)
+    public void RemoveAssistant(BaseAIAssistant toDelete)
     {
         TryUnselectAssistant(toDelete);
         assistantsList.Remove(toDelete);
@@ -102,7 +115,7 @@ public class AIAssistantManager : MonoBehaviour
     {
         foreach (var item in assistantsList)
         {
-            item.onClosing.RemoveListener(RemoveChat);
+            item.onClosing.RemoveListener(RemoveAssistant);
         }
         currentAssistant = null;
         assistantsList.Clear();

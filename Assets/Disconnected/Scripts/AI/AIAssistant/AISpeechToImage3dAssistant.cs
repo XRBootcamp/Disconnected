@@ -61,13 +61,12 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
 
     public override void Initialize(AIGameSettings gameSettings)
     {
-        textToImageAI.model = gameSettings.textToImageAIModelName;
-
         base.Initialize(gameSettings);
+        textToImageAI.model = gameSettings.textToImageAIModelName;
 
         /*
         _reasoningAIService = new AIAssistantReasoningController(
-            model: gameSettings.aiReasoningModel,
+            model: gameSettingFs.aiReasoningModel,
             currentSystemMessage: null,
             image2TextModelName: gameSettings.textToImageAIModelName.ToString(),
             buildTextToImagePromptDescription: buildingTextToImagePromptSystemDocument.text,
@@ -92,16 +91,48 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
     #region AI-Assistant-Main-Methods
 
     /// <summary>
+    /// Override the async processing to add the interjection before calling base processing
+    /// </summary>
+    protected override async Task ProcessUserRecordedIntentAsync()
+    {
+        try
+        {
+            // just an audio snippet of assistant thinking to provide a sense of processing not in vacuum
+            var interjectionTask = AssistantAnswer(AssistantSpeechSnippets.EffortBasedInterjections.GetRandomEntry());
+
+            // Call the base processing (transcription and reasoning)
+            await base.ProcessUserRecordedIntentAsync();
+
+            // Wait for the interjection to complete
+            if (interjectionTask != null)
+            {
+                await interjectionTask;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)}] Error in ProcessUserRecordedIntentAsync: {e}");
+            throw; // Re-throw to let base class handle state reset
+        }
+    }
+
+    /// <summary>
     /// After recording user audio, we transcribe it in our speech to text AI, then run the function calling LLm AI
     /// for it to generate image/3d model or answer user questions.
     /// </summary>
     /// <returns></returns>
     protected override async Task MakeRequestToAssistant()
     {
-        
-        // NOTE: this method does all the Heavy Lifting
-        toolOutput = await _reasoningAIService.RunReasoningAsync(chatData, userIntent);
-
+        try
+        {
+            // NOTE: this method does all the Heavy Lifting
+            toolOutput = await _reasoningAIService.RunReasoningAsync(chatData, userIntent);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)}] Error in MakeRequestToAssistant: {e}");
+            throw; // Re-throw to let base class handle the error
+        }
     }
 
     /// <summary>
@@ -135,21 +166,23 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
             Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} TextToImageRequestModel:\n{returnString}");
 
             // Generate text to image results based on prompt
-            var imageResults = await textToImageAI.GenerateTextToImage(
+            var imageResultsTask = textToImageAI.GenerateTextToImage(
                 request: request,
-                onStartAction: null, // TODO: add voice input
+                onStartAction: null, 
                 onCompleteAction: SetLastGeneratedImage,
                 onErrorAction: null // TODO: add voice input as well
             );
 
-            // Once image has been generated - I can run all async operations concurrently: AI speech and text-to-3d results
-            var tasks = new List<Task>();
+            // this text to image some time - so it best to run this assistant model asking for a bit more time
+            await Task.WhenAll(
+                //AssistantAnswer(AssistantSpeechSnippets.TimeBasedInterjections.GetRandomEntry()),
+                imageResultsTask
+            );
+            var imageResults = await imageResultsTask;
 
-            // this is just a shitty way to get the list of GameObjects created
+            // TODO: Add an if based on function - to run 3d model generation or not 
+            // Once image has been generated - I can run all generate 3d model
             var modelTasks = new List<Task<GameObject>>();
-
-            // Add text-to-speech task - not storing since it is the assistant talking
-            tasks.Add(assistantTextToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None));
 
             // Add all 3D model generation tasks and collect their results
             foreach (var image in imageResults)
@@ -162,24 +195,12 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
                     parent: null
                 );
                 modelTasks.Add(modelTask);
-                tasks.Add(modelTask);
             }
 
-            // Wait for all tasks to complete
-            await Task.WhenAll(tasks);
+            // Wait for all model generation tasks to complete
+            var generatedModels = await Task.WhenAll(modelTasks);
 
-            // Collect all the generated GameObjects
-            var generatedModels = new List<GameObject>();
-            foreach (var modelTask in modelTasks)
-            {
-                var model = await modelTask; // This will be immediate since we already awaited all tasks
-                if (model != null)
-                {
-                    generatedModels.Add(model);
-                }
-            }
-
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Count} 3D models");
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Length} 3D models");
 
             // TODO: part to invoke UI / UX changes in the main thread
             UnityMainThreadDispatcher.Instance().Enqueue(async () =>
@@ -199,6 +220,10 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
                 // TODO: UI Display stuff - event invoke
             });
             errorOutput = null;
+
+            // Now, after all model generation and main thread work, run AssistantAnswer
+            _ = AssistantAnswer(assistantResponse); // fire-and-forget, or await if you want to wait
+
             return returnString;
         }
         catch (Exception e)
@@ -206,8 +231,9 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
             string errorMessage = $"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} ERROR:\n{e}";
             Debug.LogError(errorMessage);
             errorOutput = errorMessage;
+            AssistantOnErrorOccurred(errorMessage);
 
-            //state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
 
             return null;
         }
@@ -233,7 +259,8 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
             string assistantResponse = jsonModel.assistantResponse;
 
             var returnString = JsonSerializer.Serialize(jsonModel);
-            await assistantTextToSpeechAI.GenerateAndPlaySpeech(assistantResponse, FileEnumPath.None);
+
+            await AssistantAnswer(assistantResponse);
 
             Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} Completed!!!");
 
@@ -249,7 +276,8 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         catch (Exception e)
         {
             Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} ERROR:\n{e}");
-            //state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            AssistantOnErrorOccurred(e.ToString());
+            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
             return null;
         }
     }
@@ -268,6 +296,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
 
     #region Buttons
     // NOTE: buttons do not propagate in extended classes
+    /*
     [Button]
     protected override void FirstStartRecording()
     {
@@ -275,10 +304,11 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
     }
 
     [Button]
-    protected override void SecondStopRecordingAndSave()
+    protected override void SecondStopRecordingAndProcessIntent()
     {
-        base.SecondStopRecordingAndSave();
+        base.SecondStopRecordingAndProcessIntent();
     }
+    */
 
     #endregion
 

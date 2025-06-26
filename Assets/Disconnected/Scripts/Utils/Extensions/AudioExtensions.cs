@@ -9,12 +9,12 @@ public static class AudioExtensions
         logPrefix ??= $"{nameof(AudioExtensions)} - {nameof(TrySaveWav)}";
         if (clip == null)
         {
-            Debug.LogError($"[{nameof(logPrefix)} - Not Saved] No Audio Clip to SAVE");
+            Debug.LogError($"[{logPrefix} - Not Saved] No Audio Clip to SAVE");
             return null;
         }
 		if (rootPath == FileEnumPath.None)
 		{
-			Debug.Log($"[{nameof(logPrefix)} - Not Saved] rootPath set to None so it is not recorded");
+			Debug.Log($"[{logPrefix} - Not Saved] rootPath set to None so it is not recorded");
             return null;
 		}
 
@@ -27,7 +27,7 @@ public static class AudioExtensions
 
         if (SavWav.Save(storedFilePath, clip))
         {
-            Debug.Log($"[{nameof(logPrefix)} - Saved!] to: {storedFilePath}");
+            Debug.Log($"[{logPrefix} - Saved!] to: {storedFilePath}");
         }
         return storedFilePath;
     }

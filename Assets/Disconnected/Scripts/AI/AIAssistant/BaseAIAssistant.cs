@@ -18,7 +18,6 @@ using System.IO;
 [RequireComponent(typeof(WhisperTranscriber))]
 [RequireComponent(typeof(GroqTTS))]
 [RequireComponent(typeof(AudioSource))]
-[RequireComponent(typeof(AIAssistantReasoningController))]
 public abstract class BaseAIAssistant : MonoBehaviour
 {
     public enum State
@@ -31,6 +30,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
     [SerializeField] protected MicRecorder micRecorder;
     [SerializeField] protected WhisperTranscriber speech2TextAI;
     [SerializeField] protected GroqTTS assistantTextToSpeechAI;
+    [SerializeField] protected AudioSource assistantAudioSource;
     protected AIAssistantReasoningController _reasoningAIService;
 
     [Space]
@@ -63,7 +63,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
         micRecorder = GetComponent<MicRecorder>();
         speech2TextAI = GetComponent<WhisperTranscriber>();
         assistantTextToSpeechAI = GetComponent<GroqTTS>();
-        assistantTextToSpeechAI.audioSource = GetComponent<AudioSource>();
+        assistantAudioSource = GetComponent<AudioSource>();
     }
 
     protected virtual void Start()
@@ -80,7 +80,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
     }
 
     // NOTE: to simplify the process
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         onApiResponse.RemoveAllListeners();
         onApiRequest.RemoveAllListeners();
@@ -140,19 +140,37 @@ public abstract class BaseAIAssistant : MonoBehaviour
     /// Method that will start the process to make request to assistant 
     /// </summary>
     /// <param name="arg0">ignored</param>
-    protected virtual async void UserRecordedIntent(AudioClip arg0)
+    protected virtual void UserRecordedIntent(AudioClip arg0)
     {
         // debug
         micRecording = micRecorder.GetLastAudioClip();
 
-        // transcribe user intent from mic recording
-        userIntent = await speech2TextAI.TranscribeAsync(micRecorder.GetLastFilePath());
+        // Start the async processing
+        _ = ProcessUserRecordedIntentAsync();
+    }
 
-        // NOTE: this method does all the Heavy Lifting
-        await MakeRequestToAssistant();
+    /// <summary>
+    /// Async method that handles the actual processing of user recorded intent
+    /// </summary>
+    protected virtual async Task ProcessUserRecordedIntentAsync()
+    {
+        try
+        {
+            // transcribe user intent from mic recording
+            userIntent = await speech2TextAI.TranscribeAsync(micRecorder.GetLastFilePath());
 
-        // reset state once it has been handled
-        state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            // NOTE: this method does all the Heavy Lifting
+            await MakeRequestToAssistant();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[{nameof(BaseAIAssistant)}] Error processing user recorded intent: {e}");
+        }
+        finally
+        {
+            // reset state once it has been handled
+            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+        }
     }
 
     protected virtual async Task MakeRequestToAssistant()
@@ -162,6 +180,34 @@ public abstract class BaseAIAssistant : MonoBehaviour
 
         Debug.Log($"{nameof(MakeRequestToAssistant)} - to be implemented soon");
         await Task.Yield();
+    }
+
+    protected Task<GroqTTS> AssistantAnswer(string assistantResponse)
+    {
+        try
+        {
+            assistantAudioSource.Stop();
+            return assistantTextToSpeechAI.GenerateAndPlaySpeech(assistantResponse, assistantAudioSource, FileEnumPath.None);
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    // TODO: in the future add context to error
+    protected async void AssistantOnErrorOccurred(string context = null)
+    {
+        try
+        {
+            await AssistantAnswer(AssistantSpeechSnippets.ErrorInterjections.GetRandomEntry());
+        }
+        catch (Exception e)
+        {
+
+            return;
+        }
+
     }
 
     #endregion
@@ -190,7 +236,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
         }
 
         // Use the singleton instance
-        AIAssistantManager.Instance.RemoveChat(this);
+        AIAssistantManager.Instance.RemoveAssistant(this);
         MicRecorderManager.Instance.UnregisterRecorder(micRecorder);
         onClosing.Invoke(this);
 
@@ -217,7 +263,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
     }
 
     [Button]
-    protected virtual void SecondStopRecordingAndSave()
+    protected virtual void SecondStopRecordingAndProcessIntent()
     {
         // NOTE: Fake Mic Recording
         if (AIClientFakes.TryHandleFakeRecorder(aiClientToggle, SetFakeMicRecording))

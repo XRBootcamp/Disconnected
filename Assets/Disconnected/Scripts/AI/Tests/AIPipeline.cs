@@ -9,6 +9,7 @@ using Sirenix.OdinInspector;
 
 public class AIPipeline : MonoBehaviour
 {
+    [SerializeField] private AudioSource aiAudioSource;
     [SerializeField] private MicRecorder micRecorder;
 
     [Header("Speech-to-Text")]
@@ -123,13 +124,21 @@ public class AIPipeline : MonoBehaviour
         // TODO: will we need to assign a position, parent?
         GameObject obj = Instantiate(text2SpeechAIPrefab, null);
         obj.name += "_FAKE";
+
         GroqTTS newTTS = obj.GetComponent<GroqTTS>();
-        newTTS.SetClip(fakeClip);
+
         newTTS.SetPrompt($"{obj.name} - FAKE PROMPT");
         newTTS.ForceIsGenerated();
 
-        newTTS.PlayAudio();
+        PlayAiClip(fakeClip);
         listOfGeneratedGroqTTS.Add(newTTS);
+    }
+
+    private void PlayAiClip(AudioClip fakeClip)
+    {
+        aiAudioSource.Stop();
+        aiAudioSource.clip = fakeClip;
+        aiAudioSource.Play();
     }
 
     public async Task CreateTextToSpeech(PlayAIVoice aiVoice, string prompt, Transform parent)
@@ -140,15 +149,14 @@ public class AIPipeline : MonoBehaviour
 
         // NOTE: Fake TTS
         if (AIClientFakes.TryHandleFakeTTS(aiClientToggle, clip => {
-            groqTTS.SetClip(clip);
-            groqTTS.PlayAudio();
+            PlayAiClip(clip);
         }))
         {
             return;
         }
 
         groqTTS.SetVoice(aiVoice);
-        var newTTS = await groqTTS.GenerateAndPlaySpeech(prompt, saveClipInRootPath: storetext2SpeechWavFiles);
+        var newTTS = await groqTTS.GenerateAndPlaySpeech(prompt, aiAudioSource, saveClipInRootPath: storetext2SpeechWavFiles);
         if (newTTS != null)
         {
             listOfGeneratedGroqTTS.Add(newTTS);

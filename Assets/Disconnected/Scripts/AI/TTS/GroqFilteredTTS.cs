@@ -14,9 +14,11 @@ public class GroqFilteredTTS : GroqTTS
     // ExclusedReserved is a property to garantee that the narrator voice is never taken in TTS
     [ExcludeReserved]  // So clean!
     private PlayAIVoice filteredSelectedVoice = PlayAIVoice.Fritz_PlayAI;
-    protected override PlayAIVoice SelectedVoice
+    public override PlayAIVoice SelectedVoice
     {
         get => filteredSelectedVoice;
+        /// this weird get/set - is to avoid selecting the assistant voice
+        /// I use that EnumReservationRegistry to lock it.
         set
         {
             var registry = EnumReservationRegistry.Instance;

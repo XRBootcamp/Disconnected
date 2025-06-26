@@ -46,4 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   aiGameSettings: {fileID: 11400000, guid: 11fe254f538770f489bee5775b6f81af, type: 2}
   aiSpeechToImage3dAssistant: {fileID: 8922837929681574246, guid: 044a68622a479eb45bfc1d3f08ce5c66, type: 3}
+  voiceCharactersAssistant: {fileID: 8922837929681574246, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
   aiClientToggle: {fileID: 11400000, guid: 1cbfabbe33b28594f8880b522e0e42d6, type: 2}

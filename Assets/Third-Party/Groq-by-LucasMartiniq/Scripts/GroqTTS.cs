@@ -40,44 +40,25 @@ public enum PlayAIVoice
 
 public class GroqTTS : MonoBehaviour
 {
-    [SerializeField] public AudioSource audioSource;
-
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
 
     private const string model = "playai-tts";
-    
-    [HideInInspector]
     [SerializeField] private PlayAIVoice selectedVoice = PlayAIVoice.Fritz_PlayAI;
     // Add a virtual property
-    protected virtual PlayAIVoice SelectedVoice
+    public virtual PlayAIVoice SelectedVoice
     {
         get => selectedVoice;
         set => selectedVoice = value;
     }
     private const string responseFormat = "wav";
+
+    public AudioClip GeneratedClip { get; private set; }
     [SerializeField] private string prompt = "I love building and shipping new features for our students!";
 
-    public UnityEvent onCompletedTTS;
+    public UnityEvent<AudioClip> onCompletedTTS;
+    public UnityEvent onErrorTTS;
 
     public bool HasFinishedGeneratingClip { get; private set; }
-
-    [Button]
-    protected virtual async void GenerateWithoutSaving()
-    {
-        await GenerateTTS(prompt, FileEnumPath.None);
-    }
-
-    [Button]
-    protected virtual async void GenerateSavingInTemp()
-    {
-        await GenerateTTS(prompt, FileEnumPath.Temporary, FilePaths.TEXT_TO_SPEECH, "tts-temp", true);
-    }
-
-    [Button]
-    protected virtual async void GenerateSavingInPersistent()
-    {
-        await GenerateTTS(prompt, FileEnumPath.Persistent, FilePaths.TEXT_TO_SPEECH, "tts-pers", true);
-    }
 
     /// <summary>
     /// Generates TTS audio from the given text, but does not play it. Sets IsGenerated and audioSource.clip. 
@@ -92,10 +73,10 @@ public class GroqTTS : MonoBehaviour
     {
         if (APIKeyLoader.Instance == null)
         {
-            Debug.LogError("APIKeyLoader instance not found!");
+            Debug.LogError($"[{nameof(GroqTTS)}] APIKeyLoader instance not found!");
             return;
         }
-
+        Debug.Log($"[{nameof(GroqTTS)}] Received text: {text}");
         var json = $"{{\"model\":\"{model}\",\"voice\":\"{GetVoiceName(SelectedVoice)}\",\"input\":\"{text}\",\"response_format\":\"{responseFormat}\"}}";
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -107,27 +88,47 @@ public class GroqTTS : MonoBehaviour
 
             if (!response.IsSuccessStatusCode)
             {
-                Debug.LogError($"TTS API call failed: {response.StatusCode}");
-                Debug.LogError(await response.Content.ReadAsStringAsync());
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Debug.LogError($"[{nameof(GroqTTS)}] TTS API call failed: {response.StatusCode}\nFor text: {text}");
+                Debug.LogError($"[{nameof(GroqTTS)}] Error content: {errorContent}");
                 return;
             }
 
             byte[] audioData = await response.Content.ReadAsByteArrayAsync();
+            Debug.Log($"[{nameof(GroqTTS)}] Received audio data: {audioData?.Length ?? 0} bytes");
 
+            if (audioData == null || audioData.Length == 0)
+            {
+                Debug.LogError($"[{nameof(GroqTTS)}] Audio data is null or empty!");
+                return;
+            }
 
-            AudioClip clip = CreateClipFromWav(audioData);
-            audioSource.clip = clip;
+            GeneratedClip = CreateClipFromWav(audioData);
 
-            string wavFilepath = clip.TrySaveWav(saveClipInRootPath, relativePath, filename, appendDateTimeToFileName, $"{nameof(GroqTTS)} - {nameof(GenerateTTS)}");
+            if (GeneratedClip == null)
+            {
+                Debug.LogError($"[{nameof(GroqTTS)}] GeneratedClip is null after CreateClipFromWav!\nFor text: {text}");
+                return;
+            }
+
+            Debug.Log($"[{nameof(GroqTTS)}] Audio clip created - Length: {GeneratedClip.length}, Channels: {GeneratedClip.channels}, Frequency: {GeneratedClip.frequency}");
+
+            if (GeneratedClip.length <= 0)
+            {
+                Debug.LogError($"[{nameof(GroqTTS)}] Generated clip length is {GeneratedClip.length} - this will cause the 'Length of created clip must be larger than 0' error!\nFor text: {text}");
+            }
+
+            string wavFilepath = GeneratedClip.TrySaveWav(saveClipInRootPath, relativePath, filename, appendDateTimeToFileName, $"{nameof(GroqTTS)} - {nameof(GenerateTTS)}");
 
             prompt = text;
             HasFinishedGeneratingClip = true;
 
-            onCompletedTTS.Invoke();
+            onCompletedTTS.Invoke(GeneratedClip);
         }
         catch (Exception ex)
         {
-            Debug.LogError("Error generating TTS: " + ex.Message);
+            Debug.LogError($"[{nameof(GroqTTS)}] Error generating TTS: {ex.Message}");
+            onErrorTTS.Invoke();
         }
     }
 
@@ -141,17 +142,25 @@ public class GroqTTS : MonoBehaviour
     /// <param name="filename">Filename base. Ignored if saveClipInRootPath = None.</param>
     /// <param name="appendDateTimeToFileName">If true, adds DataTime to filename for differentiation. Ignored if saveClipInRootPath = None.</param>
     /// <returns>Task - itself</returns>
-    public async Task<GroqTTS> GenerateAndPlaySpeech(string text, FileEnumPath saveClipInRootPath, string relativePath = "TtS", string filename = "tts", bool appendDateTimeToFileName = true)
+    public async Task<GroqTTS> GenerateAndPlaySpeech(string text, AudioSource audioSource, FileEnumPath saveClipInRootPath, string relativePath = "TtS", string filename = "tts", bool appendDateTimeToFileName = true)
     {
+        if (audioSource == null)
+        {
+            Debug.LogError($"[{nameof(GenerateAndPlaySpeech)}] - audio source required to Play immediately");
+            return null;
+        }
+
         await GenerateTTS(text, saveClipInRootPath, relativePath, filename, appendDateTimeToFileName);
         if (HasFinishedGeneratingClip)
         {
+            audioSource.Stop();
+            audioSource.clip = GeneratedClip;
             audioSource.Play();
             return this;
         }
         return null;
     }
-    
+
     private string GetVoiceName(PlayAIVoice voice)
     {
         return voice.ToString().Replace('_', '-');
@@ -159,28 +168,67 @@ public class GroqTTS : MonoBehaviour
 
     private AudioClip CreateClipFromWav(byte[] wav)
     {
+        if (wav == null || wav.Length == 0)
+        {
+            Debug.LogError($"[{nameof(GroqTTS)}] WAV data is null or empty!");
+            return null;
+        }
+        if (wav.Length < 44) // 44 is minimum valid WAV header size
+        {
+            Debug.LogError($"[{nameof(GroqTTS)}] WAV too short to contain valid header: {wav.Length} bytes");
+            return null;
+        }
+
         int channels = BitConverter.ToInt16(wav, 22);
         int sampleRate = BitConverter.ToInt32(wav, 24);
         int bitsPerSample = BitConverter.ToInt16(wav, 34);
 
         int dataStart = FindDataChunk(wav) + 8;
         int sampleCount = (wav.Length - dataStart) / (bitsPerSample / 8);
+
+        if (sampleCount <= 0)
+        {
+            Debug.LogError($"[{nameof(GroqTTS)}] Sample count is {sampleCount} - this will result in a zero-length clip!\nSample count calculation: ({wav.Length} - {dataStart}) / ({bitsPerSample} / 8) = {sampleCount}");
+            Debug.LogError($"[{nameof(GroqTTS)}] WAV header values - Channels: {channels}, SampleRate: {sampleRate}, BitsPerSample: {bitsPerSample}");
+            return null;
+        }
+
         float[] samples = new float[sampleCount];
 
         for (int i = 0; i < sampleCount; i++)
         {
             int sampleIndex = dataStart + i * 2; // assuming 16-bit PCM
+            if (sampleIndex + 1 >= wav.Length)
+            {
+                Debug.LogError($"[{nameof(GroqTTS)}] Sample index calculation: {dataStart} + {i} * 2 = {sampleIndex}");
+                break;
+            }
             short sample = BitConverter.ToInt16(wav, sampleIndex);
             samples[i] = sample / 32768f;
         }
 
-        AudioClip clip = AudioClip.Create("GroqTTS_Audio", sampleCount / channels, channels, sampleRate, false);
+        int samplesPerChannel = sampleCount / channels;
+
+        if (samplesPerChannel <= 0)
+        {
+            Debug.LogError($"[{nameof(GroqTTS)}] Samples per channel calculation: {sampleCount} / {channels} = {samplesPerChannel}");
+            return null;
+        }
+
+        AudioClip clip = AudioClip.Create($"GroqTTS_Audio-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}", samplesPerChannel, channels, sampleRate, false);
         clip.SetData(samples, 0);
+
         return clip;
     }
 
     private int FindDataChunk(byte[] wav)
     {
+        if (wav == null || wav.Length < 4)
+        {
+            Debug.LogError($"[{nameof(GroqTTS)}] WAV data is null or too small for DATA chunk search");
+            throw new Exception("WAV data is null or too small");
+        }
+
         for (int i = 12; i < wav.Length - 4; i++)
         {
             if (wav[i] == 'd' && wav[i + 1] == 'a' && wav[i + 2] == 't' && wav[i + 3] == 'a')
@@ -188,6 +236,8 @@ public class GroqTTS : MonoBehaviour
                 return i;
             }
         }
+
+        Debug.LogError($"[{nameof(GroqTTS)}] DATA chunk not found in WAV data\nWAV data length: {wav.Length} bytes\nFirst 20 bytes as ASCII: {System.Text.Encoding.ASCII.GetString(wav, 0, Math.Min(20, wav.Length))}");
         throw new Exception("DATA chunk not found in WAV");
     }
 
@@ -199,27 +249,6 @@ public class GroqTTS : MonoBehaviour
     public void SetPrompt(string newPrompt)
     {
         prompt = newPrompt;
-    }
-
-    [Button]
-    public void PlayAudio()
-    {
-        if (!HasFinishedGeneratingClip) return;
-        audioSource.Play();
-
-    }
-
-    
-    [Button]
-    public void StopAudio()
-    {
-        if (!HasFinishedGeneratingClip) return;
-        audioSource.Stop();
-    }
-
-    public void SetClip(AudioClip newClip)
-    {
-        audioSource.clip = newClip;
     }
 
 #if UNITY_EDITOR
