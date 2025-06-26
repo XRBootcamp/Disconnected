@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/01_AssetStore/DoorPackFree/Scenes/Demo3.unity
     guid: 65e74155878684f47912fe18d16f19e7
+  - enabled: 1
+    path: Assets/Disconnected/Scenes/SchoolEnvironment.unity
+    guid: cec618ad41adc8d4294f3452c00c1cb8
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 643f25f999e6cb7458fa7df133873ed8, type: 2}
     com.unity.addressableassets: {fileID: 11400000, guid: 8ecd1fa9a5af34b5f842174200be80e5, type: 2}

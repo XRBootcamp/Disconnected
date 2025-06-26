@@ -9,7 +9,7 @@ using System.Reflection;
 /// Custom editor for the reservation registry to show current state
 /// </summary>
 [CustomEditor(typeof(EnumReservationRegistry))]
-public class EnumReservationRegistryEditor : Editor
+public class EnumReservationRegistryEditor : UnityEditor.Editor
 {
     public override void OnInspectorGUI()
     {

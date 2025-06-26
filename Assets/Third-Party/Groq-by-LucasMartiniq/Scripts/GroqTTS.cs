@@ -40,6 +40,8 @@ public enum PlayAIVoice
 
 public class GroqTTS : MonoBehaviour
 {
+    [SerializeField] private AudioSource audioSource;
+    
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
 
     private const string model = "playai-tts";
@@ -137,6 +139,17 @@ public class GroqTTS : MonoBehaviour
         }
     }
 
+    public async Task PlaySpeech(AudioClip clip)
+    {
+        audioSource.clip = clip;
+        audioSource.Play();
+            
+        // Wait until the clip finishes playing
+        while (audioSource.isPlaying)
+        {
+            await Task.Delay(100); // Check every 100ms
+        }
+    }
 
     /// <summary>
     /// Generates TTS audio and plays it if successful. 
