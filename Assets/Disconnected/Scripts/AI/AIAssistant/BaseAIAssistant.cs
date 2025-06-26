@@ -62,7 +62,10 @@ public abstract class BaseAIAssistant : MonoBehaviour
     {
         micRecorder = GetComponent<MicRecorder>();
         speech2TextAI = GetComponent<WhisperTranscriber>();
-        assistantTextToSpeechAI = GetComponent<GroqTTS>();
+        // NOTE: to avoid on validate bug if moving the components around - we do have base class GroqTTS (for the assistant)
+        // and in voice characters we have a GroqFilteredTTS
+        var components = GetComponents<GroqTTS>();
+        assistantTextToSpeechAI = components.FirstOrDefault(c => c.GetType() == typeof(GroqTTS));
         assistantAudioSource = GetComponent<AudioSource>();
     }
 
