@@ -39,6 +39,7 @@ public class ImageSessionPreferences
     /// </summary>
     public ImageTarget? target { get; set; } = null;
 
+    public ImageSessionPreferences() {}
     /// <summary>
     /// Convert from API response model to Unity model
     /// </summary>
@@ -109,6 +110,8 @@ public class ImageChatOverrides
     /// </summary>
     public ImageTarget? target { get; set; } = null;
 
+    public ImageChatOverrides() {}
+
     /// <summary>
     /// Convert from API response model to Unity model
     /// </summary>
@@ -164,6 +167,7 @@ public class PromptCompiler
     [NonSerialized] private int defaultSteps = 20; // according to Runware documentation
     [NonSerialized] private double defaultCfgscale = 7; // according to Runware documentation
 
+    public PromptCompiler() {}
     // New constructor for merging
     public PromptCompiler(PromptCompiler previous = null)
     {

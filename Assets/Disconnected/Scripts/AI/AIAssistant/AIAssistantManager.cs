@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Sirenix.OdinInspector;
@@ -6,7 +7,8 @@ using UnityEngine;
 public class AIAssistantManager : MonoBehaviour
 {
     [SerializeField] private AIGameSettings aiGameSettings;
-    [SerializeField] private GameObject aiAssistantPrefab;
+    [SerializeField] private GameObject aiSpeechToImage3dAssistant;
+    [SerializeField] private GameObject voiceCharactersAssistant;
 
     [Header("Prompt Overrides")]
     [SerializeField] private ImageSessionPreferences sessionPreferences;
@@ -19,8 +21,8 @@ public class AIAssistantManager : MonoBehaviour
     // NOTE: when session stuff changes, need to change here and call other open assistants
     // unsure if need this manager to manage it - but might be important for other stuff
 
-    private HashSet<AIAssistant> assistantsList;
-    private AIAssistant currentAssistant;
+    private HashSet<BaseAIAssistant> assistantsList;
+    private BaseAIAssistant currentAssistant;
 
     // Singleton instance - destroyed when scene ends
     private static AIAssistantManager instance;
@@ -64,26 +66,38 @@ public class AIAssistantManager : MonoBehaviour
     public void CreateNewChat()
     {
         // FIXME: assign position, rotation
-        var obj = Instantiate(aiAssistantPrefab);
-        AIAssistant newAssistant = obj.GetComponent<AIAssistant>();
+        var obj = Instantiate(aiSpeechToImage3dAssistant);
+        AISpeechToImage3dAssistant newAssistant = obj.GetComponent<AISpeechToImage3dAssistant>();
         newAssistant.Initialize(aiGameSettings);
 
         assistantsList.Add(newAssistant);
-        newAssistant.onClosing.AddListener(RemoveChat);
+        newAssistant.onClosing.AddListener(RemoveAssistant);
     }
 
-    public AIAssistant.State SetStateAfterOnHold(AIAssistant aiAssistant)
+    [Button]
+    public void CreateNewVoice()
     {
-        return currentAssistant == aiAssistant ? AIAssistant.State.Selected : AIAssistant.State.None;
+        // FIXME: assign position, rotation
+        var obj = Instantiate(voiceCharactersAssistant);
+        AICharacterVoiceAssistant newAssistant = obj.GetComponent<AICharacterVoiceAssistant>();
+        newAssistant.Initialize(aiGameSettings);
+
+        assistantsList.Add(newAssistant);
+        newAssistant.onClosing.AddListener(RemoveAssistant);
+    }
+
+    public BaseAIAssistant.State SetStateAfterOnHold(BaseAIAssistant aiAssistant)
+    {
+        return currentAssistant == aiAssistant ? BaseAIAssistant.State.Selected : BaseAIAssistant.State.None;
     } 
 
-    public void SelectAssistant(AIAssistant aiAssistant)
+    public void SelectAssistant(BaseAIAssistant aiAssistant)
     {
         TryUnselectAssistant(currentAssistant);
         currentAssistant = aiAssistant;
     }
 
-    public void TryUnselectAssistant(AIAssistant aiAssistant)
+    public void TryUnselectAssistant(BaseAIAssistant aiAssistant)
     {
         if (currentAssistant == aiAssistant)
         {
@@ -91,7 +105,7 @@ public class AIAssistantManager : MonoBehaviour
         }
     }
 
-    public void RemoveChat(AIAssistant toDelete)
+    public void RemoveAssistant(BaseAIAssistant toDelete)
     {
         TryUnselectAssistant(toDelete);
         assistantsList.Remove(toDelete);
@@ -101,7 +115,7 @@ public class AIAssistantManager : MonoBehaviour
     {
         foreach (var item in assistantsList)
         {
-            item.onClosing.RemoveListener(RemoveChat);
+            item.onClosing.RemoveListener(RemoveAssistant);
         }
         currentAssistant = null;
         assistantsList.Clear();

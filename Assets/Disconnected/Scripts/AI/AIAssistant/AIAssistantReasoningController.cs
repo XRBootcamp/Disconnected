@@ -17,9 +17,9 @@ public class AIAssistantReasoningController : GroqReasoningService
     /// The image-to-text model name.
     /// </summary>
     public string Image2TextModelName { get; set; }
-    public string BuildTextToImagePromptDescription { get; private set; }
-    public string UserRequestIntro { get; private set; }
-    public string ExplainRuleSystemDescription { get; private set; }
+    public string BuildTextToImagePromptDescription { get; set; }
+    public string UserRequestIntro { get; set; }
+    public string ExplainRuleSystemDescription { get; set; }
 
     /// <param name="image2TextModelName">The image-to-text model name.</param>
 

@@ -12,7 +12,7 @@ public class MicRecorder : MonoBehaviour
     protected string filePath;
 
     [Header("Mic Settings")]
-    private int duration = 30; // seconds
+    private int duration = 60; // seconds
     public int sampleRate = 44100;
 
     // TODO: unsure if i should separate onRecordedAudio from TimePassed
@@ -23,6 +23,9 @@ public class MicRecorder : MonoBehaviour
     private bool isRecording = false;
     private float recordingStartTime = 0f;
     private bool hasTriggeredOverRecord = false;
+
+    private float _startTime;
+
 
     protected void Start()
     {
@@ -49,9 +52,10 @@ public class MicRecorder : MonoBehaviour
             return;
         }
 
-        recordedClip = Microphone.Start(micDevice, false, duration, sampleRate);
-        isRecording = true;
         recordingStartTime = Time.time;
+        recordedClip = Microphone.Start(micDevice, false, duration, sampleRate);
+        recordedClip.name = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        isRecording = true;
         hasTriggeredOverRecord = false;
         Debug.Log("Recording...");
     }
@@ -75,6 +79,12 @@ public class MicRecorder : MonoBehaviour
 
         Microphone.End(micDevice);
         isRecording = false;
+        // Trim Clips when you stop the recording before time
+        if (!hasTriggeredOverRecord)
+        {
+            recordedClip = TrimClip(recordedClip, GetCurrentRecordingTime());
+        }
+
         hasTriggeredOverRecord = false;
 
         // Notify the manager that recording has stopped
@@ -94,9 +104,7 @@ public class MicRecorder : MonoBehaviour
         // Check if recording has exceeded the duration limit
         if (isRecording && !hasTriggeredOverRecord)
         {
-            float currentRecordingTime = Time.time - recordingStartTime;
-
-            if (currentRecordingTime >= duration)
+            if (GetCurrentRecordingTime() >= duration)
             {
                 hasTriggeredOverRecord = true;
                 StopAndSave(false);
@@ -104,6 +112,45 @@ public class MicRecorder : MonoBehaviour
                 Debug.LogWarning($"[{nameof(MicRecorder)}] Recording exceeded duration limit of {duration} seconds!");
             }
         }
+    }
+
+    private AudioClip TrimClip(AudioClip clip, float length)
+    {
+        // Calculate the number of samples to keep
+        int samples = Mathf.CeilToInt(clip.frequency * length);
+        if (samples <= 0 || samples > clip.samples)
+        {
+            Debug.LogWarning($"Invalid sample count: {samples}. Using original clip.");
+            return clip;
+        }
+
+        // Create arrays for each channel
+        float[] data = new float[samples * clip.channels];
+
+        // Get the audio data
+        if (!clip.GetData(data, 0))
+        {
+            Debug.LogError("Failed to get audio data from clip");
+            return clip;
+        }
+
+        // Create the new clip
+        AudioClip trimmedClip = AudioClip.Create(
+            $"{clip.name}_trimmed",
+            samples,
+            clip.channels,
+            clip.frequency,
+            false
+        );
+
+        // Set the data
+        if (!trimmedClip.SetData(data, 0))
+        {
+            Debug.LogError("Failed to set audio data to trimmed clip");
+            return clip;
+        }
+
+        return trimmedClip;
     }
 
     /// <summary>
