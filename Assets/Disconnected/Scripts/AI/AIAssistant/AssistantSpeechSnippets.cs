@@ -169,4 +169,38 @@ public static class AssistantSpeechSnippets
     "Well, that backfired. Attempting again."
 };
 
+public static readonly List<string> CreativeOutputReadyInterjections = new List<string>
+{
+    "Here it is — your latest creation.",
+    "All done! Hope you like what came out.",
+    "Voilà — fresh from the forge.",
+    "Just finished — take a look.",
+    "Here we go. One idea, fully realized.",
+    "Your piece is ready.",
+    "Creation complete — it’s all yours now.",
+    "The result is ready to be seen.",
+    "Ready when you are — something special awaits.",
+    "It’s cooked and cooling — go check it out.",
+    "Done! This one has a spark to it.",
+    "Finished — and I think it turned out well.",
+    "It’s live. Let’s see what you think.",
+    "Here comes your little masterpiece.",
+    "The moment’s here. Your work is ready.",
+    "I’ve wrapped it up — ready to unveil.",
+    "Creation complete. Dive in whenever you like.",
+    "Ready! It’s waiting for you.",
+    "Done and dusted. Take a peek.",
+    "It's all set — your vision, now real.",
+    "Take a look — something new is born.",
+    "Your result is ready. Let’s admire it.",
+    "Here it is. Crafted just now.",
+    "Done! I hope it surprises you.",
+    "Unveiling complete — go see it.",
+    "Your new artifact is ready.",
+    "It’s finished. I’ll let it speak for itself.",
+    "I’ve prepared something for you — have a look.",
+    "Completed. It’s waiting patiently.",
+    "This one’s done. Curious what you’ll think."
+};
+
 }

@@ -29,14 +29,62 @@ namespace Disconnected.Scripts.Utils
         void Start()
         {
             _grabInteractable = GetComponent<XRGrabInteractable>();
-            _grabInteractable.selectEntered.AddListener(OnGrab);
-            _grabInteractable.selectExited.AddListener(OnRelease);
+            if (_grabInteractable == null)
+            {
+                Debug.LogWarning("ObjectInteraction: XRGrabInteractable component not found on this GameObject.");
+            }
+            else
+            {
+                _grabInteractable.selectEntered.AddListener(OnGrab);
+                _grabInteractable.selectExited.AddListener(OnRelease);
+            }
 
             // Get the XR controllers from the scene
-            _leftController = GameObject.Find("LeftHand Controller").GetComponent<XRController>();
-            _rightController = GameObject.Find("RightHand Controller").GetComponent<XRController>();
+            GameObject leftControllerObj = GameObject.Find("LeftHand Controller");
+            GameObject rightControllerObj = GameObject.Find("RightHand Controller");
+            if (leftControllerObj != null)
+            {
+                _leftController = leftControllerObj.GetComponent<XRController>();
+                if (_leftController == null)
+                {
+                    Debug.LogWarning("ObjectInteraction: XRController component not found on LeftHand Controller GameObject.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("ObjectInteraction: LeftHand Controller GameObject not found in the scene.");
+            }
+            if (rightControllerObj != null)
+            {
+                _rightController = rightControllerObj.GetComponent<XRController>();
+                if (_rightController == null)
+                {
+                    Debug.LogWarning("ObjectInteraction: XRController component not found on RightHand Controller GameObject.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("ObjectInteraction: RightHand Controller GameObject not found in the scene.");
+            }
 
-            objectPreview.gameObject.SetActive(false); // Hide the preview initially
+            // TODO: assign object preview
+            if (objectPreview != null)
+            {
+                objectPreview.gameObject.SetActive(false); // Hide the preview initially
+            }
+            else
+            {
+                Debug.LogWarning("ObjectInteraction: objectPreview gameObject not found in the scene.");
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (_grabInteractable != null)
+            {
+                _grabInteractable.selectEntered.RemoveListener(OnGrab);
+                _grabInteractable.selectExited.RemoveListener(OnRelease);
+            }
         }
 
         void OnGrab(SelectEnterEventArgs arg0)

@@ -19,6 +19,9 @@ Generates a final structured image prompt for a text-to-image model. Synthesizes
 - Other metadata fields such as `imageShape`, `target`, `customBackground`, `imageArtStyle`, `allowNsfw`, `editDetail`, and `t2iCreativity` must:
   - Be filled based on user request or inherited from preferences.
   - Always be reflected and harmonized with the `positivePrompt`.
+  - The `positivePrompt` must explicitly reflect subject framing (e.g., "full-body", "close-up") when known. If unspecified by the user, default to full-body for character-based subjects unless overridden by global, session or chat rules.
+- If a field and the user’s prompt are in tension, the user prompt must take precedence. The positivePrompt must be rewritten to resolve any conflict.
+- If the positivePrompt exceeds model-specific length limits, apply compression strategies that preserve core semantics and priority constraints.
 
 ## Invocation Rules
 Invoke this function when:
@@ -31,22 +34,33 @@ Avoid invoking if:
 - The user is asking about system logic or rules (use explain_rule_system).
 
 ## Assistant Response Guidelines
+
 - Always include an `assistantResponse` string.
-- The response must be human-friendly and communicate that:
-  - The image is being generated.
-  - The provided prompt has been tailored to match both the user request and active preferences.
-- The assistant must never imply that it created the image itself — only the prompt.
+- The response must be concise and human-friendly.
+- It should introduce the result with neutral language such as:
+  - "Here is your work of art: with glowing accents."
+  - "Here is what you requested: now with golden armor."
+- When the user gives a follow-up modification, summarize it in a short phrase only if the change is obvious and discrete.
+- Do not describe the full prompt. Do not reference specific models, pipelines, rendering steps, or whether the result is an image, 3D model, or other asset.
+- Avoid phrases like:
+  - "Your image has been generated..."
+  - "This model has produced..."
+  - "The system created..."
 
 Example:
-"Here’s your image: a silver robotic tiger with glowing blue eyes, built using the prompt that matches your request and session settings."
+"Here is your work of art: now with a metallic finish."
 
 Avoid:
-- Repeating the full `positivePrompt` in the `assistantResponse` unless explicitly requested.
-- Using abstract or vague language.
+- Repeating the full `positivePrompt` unless explicitly requested.
+- Using technical or abstract phrasing.
+- Mentioning the format or medium of the output.
 
 ## Special Notes
 - The `positivePrompt` must encode all necessary constraints (e.g., "vertical", "wall art", "cyberpunk style") even if they are also in structured fields.
 - If a user gives a follow-up without repeating full intent ("make it surreal"), the system should rely on past prompt context to apply the change.
-- `customBackground` and `imageArtStyle` are usually null unless explicitly changed by the user; however, if changed, they must appear in the positive prompt.
+- `imageArtStyle` are usually null unless explicitly changed by the user; however, if changed, they must appear in the positive prompt.
+- If `customBackground` is null, the background should default to transparent or visually minimal and this must be encoded in the `positivePrompt`. If set explicitly, the value must override this default and also appear in the prompt.
 - `target` affects the tone of the `positivePrompt` (e.g., toy design vs. cinematic scene).
 - `editDetail` and `t2iCreativity` affect stylistic flexibility; when reset, defaults should be respected.
+- When the user does not specify framing (e.g., close-up, portrait, bust), the system must assume a full-body composition by default, especially for creatures, characters, or humanoids, and it must be encoded in the `positivePrompt`.
+- If the user prompt diverges significantly from prior context, past prompt data must be disregarded to avoid misalignment.

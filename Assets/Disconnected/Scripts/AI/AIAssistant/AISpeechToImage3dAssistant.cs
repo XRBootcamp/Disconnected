@@ -13,9 +13,11 @@ using System.Text.Json;
 using Assets.Disconnected.Scripts.AI.AIAssistant.API;
 using System.Linq.Expressions;
 using System.IO;
+using Disconnected.Scripts.Utils;
 
 
 [RequireComponent(typeof(RunwareTTI))]
+[RequireComponent(typeof(InteractionComponentManager))]
 public class AISpeechToImage3dAssistant : BaseAIAssistant
 {
 
@@ -24,6 +26,8 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
     [SerializeField] private RunwareTTI textToImageAI;
 
     [SerializeField] private SF3DAPIClient imageTo3DAI;
+
+    [SerializeField] private InteractionComponentManager xrInteractionManager;
 
     [Space]
     [Header("AI Reasoning Data")]
@@ -44,6 +48,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
     {
         base.OnValidate();
         textToImageAI = GetComponent<RunwareTTI>();
+        xrInteractionManager = GetComponent<InteractionComponentManager>();
     }
 
     protected override void Start()
@@ -168,7 +173,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
             // Generate text to image results based on prompt
             var imageResultsTask = textToImageAI.GenerateTextToImage(
                 request: request,
-                onStartAction: null, 
+                onStartAction: null,
                 onCompleteAction: SetLastGeneratedImage,
                 onErrorAction: null // TODO: add voice input as well
             );
@@ -191,16 +196,19 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
                     imagePath: image.imagePath,
                     filename: $"{Path.GetFileNameWithoutExtension(image.imagePath)}-model",
                     fileEnumPath: FileEnumPath.Temporary, // ???: or Persistent - since we are storing in cloud, I think Persistent storage in headset does not make much sense 
-                    onModelLoaded: null, // TODO: stuff when model is loaded - place method here
+                    onModelLoaded: AddInteractionComponents, // TODO: stuff when model is loaded - place method here
                     parent: null
                 );
                 modelTasks.Add(modelTask);
             }
 
+
             // Wait for all model generation tasks to complete
             var generatedModels = await Task.WhenAll(modelTasks);
 
             Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Length} 3D models");
+
+            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} Completed!!!");
 
             // TODO: part to invoke UI / UX changes in the main thread
             UnityMainThreadDispatcher.Instance().Enqueue(async () =>
@@ -208,21 +216,14 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
                 chatData.promptCompiler = newPromptCompiler;
                 chatData.assistantResponse = assistantResponse;
 
-                // Example: Save prefabs in editor and then do more stuff with the gameObjects
-#if UNITY_EDITOR
-                foreach (var model in generatedModels)
-                {
-                    imageTo3DAI.SavePrefab(model, model.name);
-                }
-#endif
-                Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} Completed!!!");
-
                 // TODO: UI Display stuff - event invoke
             });
             errorOutput = null;
 
             // Now, after all model generation and main thread work, run AssistantAnswer
-            _ = AssistantAnswer(assistantResponse); // fire-and-forget, or await if you want to wait
+            // TODO: prompt better to have it running
+            //_ = AssistantAnswer(assistantResponse);
+            _ = AssistantAnswer(AssistantSpeechSnippets.CreativeOutputReadyInterjections.GetRandomEntry()); // fire-and-forget, or await if you want to wait
 
             return returnString;
         }
@@ -237,6 +238,11 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
 
             return null;
         }
+    }
+
+    private void AddInteractionComponents(GameObject @object)
+    {
+        xrInteractionManager.AddInteractionComponents(@object);
     }
 
     /// <summary>

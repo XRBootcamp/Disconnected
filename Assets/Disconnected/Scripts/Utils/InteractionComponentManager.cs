@@ -7,40 +7,56 @@ namespace Disconnected.Scripts.Utils
     public class InteractionComponentManager : MonoBehaviour
     {
         // Add interaction components (XRGrabInteractable, Collider, Rigidbody) to the innermost child
-        public static void AddInteractionComponents(GameObject model)
+        public void AddInteractionComponents(GameObject model)
         {
             if (model != null)
             {
-                // Recursively find the innermost child object (where the mesh is)
+                // Add Rigidbody to interact with physics (optional for snapping, gravity, etc.)
+                // Only add Rigidbody if it doesn't already exist
+                Rigidbody rigidbody = model.GetComponent<Rigidbody>();
+                if (rigidbody == null)
+                {
+                    rigidbody = model.AddComponent<Rigidbody>();
+                }
+                rigidbody.isKinematic = true;
+                rigidbody.useGravity = false;
+
+                // Recursively find the innermost child object (last child in the deepest path)
                 Transform innermostChild = GetInnermostChild(model.transform);
 
                 if (innermostChild != null)
                 {
-                    // Add XR Grab Interactable component for object interaction to the innermost child
-                    XRGrabInteractable grabInteractable = innermostChild.gameObject.AddComponent<XRGrabInteractable>();
-
                     // Add Collider to the innermost child (if it doesn't already exist)
+                    // NOTE: adding the collider before so it is added to grab interactable automatically
                     if (innermostChild.GetComponent<Collider>() == null)
                     {
-                        innermostChild.gameObject
-                            .AddComponent<
-                                BoxCollider>(); // You can change this to any collider type (BoxCollider, MeshCollider, etc.)
+                        Collider col = innermostChild.gameObject.AddComponent<BoxCollider>();
                     }
 
-                    // Add Rigidbody to interact with physics (optional for snapping, gravity, etc.)
-                    Rigidbody rigidbody = innermostChild.gameObject.AddComponent<Rigidbody>();
-                    rigidbody.isKinematic = true; // Set to true to prevent physics calculations (e.g., falling)
-                    rigidbody.useGravity = false; // Disable gravity so it doesn't fall
+                    // Add XR Grab Interactable component for object interaction
+                    // Only add XRGrabInteractable if it doesn't already exist
+                    XRGrabInteractable xRGrabInteractable = model.GetComponent<XRGrabInteractable>();
+                    if (xRGrabInteractable == null)
+                    {
+                        xRGrabInteractable = model.AddComponent<XRGrabInteractable>();
+                    }
 
-                    // Optionally, add custom interaction script (e.g., for scaling, rotating, etc.)
-                    ObjectInteraction interactionScript = innermostChild.gameObject.AddComponent<ObjectInteraction>();
-
+                    var objectInteractable = model.GetComponent<ObjectInteraction>();
+                    // Only add ObjectInteraction if it doesn't already exist
+                    if (objectInteractable == null)
+                    {
+                        objectInteractable = model.AddComponent<ObjectInteraction>();
+                    }
                     Debug.Log("Interaction components added to the innermost child of the model.");
+
                 }
                 else
                 {
                     Debug.LogError("No innermost child found to add components to.");
                 }
+
+
+
             }
             else
             {
@@ -48,8 +64,8 @@ namespace Disconnected.Scripts.Utils
             }
         }
 
-        // Helper method to recursively find the innermost child object
-        private static Transform GetInnermostChild(Transform parent)
+        // Helper method to get the last child in the deepest path from the root
+        private Transform GetInnermostChild(Transform parent)
         {
             // If there are no children, return the parent itself (innermost child)
             if (parent.childCount == 0)
