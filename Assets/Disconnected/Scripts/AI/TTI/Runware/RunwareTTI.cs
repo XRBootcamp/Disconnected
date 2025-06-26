@@ -1,15 +1,9 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using REST_API_HANDLER;
 using UnityEngine;
-using UnityEngine.Networking;
-using TMPro;
 using System;
-using System.IO;
-using Microsoft.Unity.VisualStudio.Editor;
 using System.Net.Http;
-using NUnit.Framework;
 using System.Linq;
 
 namespace Runware
@@ -138,7 +132,10 @@ namespace Runware
                 string filename = $"RunwareT2I_{i.ToString("0.##")}";
 
                 _texture.name = filename;
+                // TODO: handle Texture importer to make alpha transparency
+#if UNITY_EDITOR
                 _texture.alphaIsTransparency = alphaIsTransparency;
+#endif
 
                 string imagePath = ImageManagementExtensions.WriteImageOnDisk(
                     _texture,

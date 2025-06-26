@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: AIGameSettings
   m_EditorClassIdentifier: 
   aiAssistantVoice: 0
+  textToImageAIModelName: 1
+  aiReasoningModel: qwen/qwen3-32b
   reservationRegistry: {fileID: 11400000, guid: a529527c16e28d64f92d2394b6bd491c, type: 2}
