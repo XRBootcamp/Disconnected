@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Sirenix.OdinInspector;
 #if UNITY_EDITOR
 using UnityEditor;
 using System.Reflection;
@@ -58,6 +59,7 @@ public class GroqFilteredTTS : GroqTTS
     }
 }
 
+/*
 #if UNITY_EDITOR
 
 [CustomEditor(typeof(GroqFilteredTTS))]
@@ -71,3 +73,4 @@ public class GroqFilteredTTSEditor : Editor
     }
 }
 #endif
+*/

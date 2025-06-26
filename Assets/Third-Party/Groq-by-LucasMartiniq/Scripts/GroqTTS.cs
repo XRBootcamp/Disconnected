@@ -45,6 +45,8 @@ public class GroqTTS : MonoBehaviour
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
 
     private const string model = "playai-tts";
+    
+    [HideInInspector]
     [SerializeField] private PlayAIVoice selectedVoice = PlayAIVoice.Fritz_PlayAI;
     // Add a virtual property
     protected virtual PlayAIVoice SelectedVoice
@@ -60,21 +62,21 @@ public class GroqTTS : MonoBehaviour
     public bool HasFinishedGeneratingClip { get; private set; }
 
     [Button]
-    private async void GenerateWithoutSaving()
+    protected virtual async void GenerateWithoutSaving()
     {
-        await GenerateAndPlaySpeech(prompt, FileEnumPath.None);
+        await GenerateTTS(prompt, FileEnumPath.None);
     }
 
     [Button]
-    private async void GenerateSavingInTemp()
+    protected virtual async void GenerateSavingInTemp()
     {
-        await GenerateAndPlaySpeech(prompt, FileEnumPath.Temporary, FilePaths.TEXT_TO_SPEECH, "tts-temp", true);
+        await GenerateTTS(prompt, FileEnumPath.Temporary, FilePaths.TEXT_TO_SPEECH, "tts-temp", true);
     }
 
     [Button]
-    private async void GenerateSavingInPersistent()
+    protected virtual async void GenerateSavingInPersistent()
     {
-        await GenerateAndPlaySpeech(prompt, FileEnumPath.Persistent, FilePaths.TEXT_TO_SPEECH, "tts-pers", true);
+        await GenerateTTS(prompt, FileEnumPath.Persistent, FilePaths.TEXT_TO_SPEECH, "tts-pers", true);
     }
 
     /// <summary>
@@ -200,18 +202,19 @@ public class GroqTTS : MonoBehaviour
     }
 
     [Button]
-    public void StopAudio()
-    {
-        if (!HasFinishedGeneratingClip) return;
-        audioSource.Stop();
-    }
-
-    [Button]
     public void PlayAudio()
     {
         if (!HasFinishedGeneratingClip) return;
         audioSource.Play();
 
+    }
+
+    
+    [Button]
+    public void StopAudio()
+    {
+        if (!HasFinishedGeneratingClip) return;
+        audioSource.Stop();
     }
 
     public void SetClip(AudioClip newClip)
