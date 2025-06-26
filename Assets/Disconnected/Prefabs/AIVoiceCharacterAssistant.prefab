@@ -10,11 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 6925302362569539761}
   - component: {fileID: 2920116683397000398}
+  - component: {fileID: 6677220594626769603}
   - component: {fileID: 9215604860699759758}
   - component: {fileID: 4390892513277648101}
   - component: {fileID: 5246970141693001019}
   - component: {fileID: 8746984680263264971}
-  - component: {fileID: 6677220594626769603}
   m_Layer: 0
   m_Name: AIVoiceCharacterAssistant
   m_TagString: Untagged
@@ -51,7 +51,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   micRecorder: {fileID: 9215604860699759758}
   speech2TextAI: {fileID: 4390892513277648101}
-  assistantTextToSpeechAI: {fileID: 5246970141693001019}
+  assistantTextToSpeechAI: {fileID: 6677220594626769603}
   assistantAudioSource: {fileID: 8746984680263264971}
   aiClientToggle: {fileID: 11400000, guid: 1cbfabbe33b28594f8880b522e0e42d6, type: 2}
   state: 0
@@ -77,6 +77,27 @@ MonoBehaviour:
       m_Calls: []
   characterVoicePrefab: {fileID: 5519607266983864352, guid: cb00e8d89db71f544b5a3272d0eefb31, type: 3}
   characterTextToSpeechAI: {fileID: 6677220594626769603}
+--- !u!114 &6677220594626769603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8922837929681574246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a84aca99d6525de41bb044f0da62254e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  selectedVoice: 14
+  prompt: I love building and shipping new features for our students!
+  onCompletedTTS:
+    m_PersistentCalls:
+      m_Calls: []
+  onErrorTTS:
+    m_PersistentCalls:
+      m_Calls: []
+  filteredSelectedVoice: 14
 --- !u!114 &9215604860699759758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -226,24 +247,3 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &6677220594626769603
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8922837929681574246}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a84aca99d6525de41bb044f0da62254e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  selectedVoice: 14
-  prompt: I love building and shipping new features for our students!
-  onCompletedTTS:
-    m_PersistentCalls:
-      m_Calls: []
-  onErrorTTS:
-    m_PersistentCalls:
-      m_Calls: []
-  filteredSelectedVoice: 14

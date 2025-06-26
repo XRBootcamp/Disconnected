@@ -149,6 +149,18 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
         CharacterVoiceSource.Stop();
     }
 
+    [Button]
+    public async void OverridePromptWithVoice()
+    {
+        await characterTextToSpeechAI.GenerateTTS(
+            text: characterTextToSpeechAI.Prompt,
+            saveClipInRootPath: FileEnumPath.Persistent,
+            relativePath: FilePaths.CHARACTER_SPEECH,
+            filename: characterTextToSpeechAI.SelectedVoice.ToString(),
+            appendDateTimeToFileName: true
+        );
+    }
+
     protected override void OnDestroy()
     {
         base.OnDestroy();

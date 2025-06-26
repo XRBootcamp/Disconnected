@@ -43,6 +43,8 @@ public class GroqTTS : MonoBehaviour
     private const string apiUrl = "https://api.groq.com/openai/v1/audio/speech";
 
     private const string model = "playai-tts";
+
+    [HideInInspector]
     [SerializeField] private PlayAIVoice selectedVoice = PlayAIVoice.Fritz_PlayAI;
     // Add a virtual property
     public virtual PlayAIVoice SelectedVoice
@@ -53,7 +55,10 @@ public class GroqTTS : MonoBehaviour
     private const string responseFormat = "wav";
 
     public AudioClip GeneratedClip { get; private set; }
+
+    [TextArea(5, 20)]
     [SerializeField] private string prompt = "I love building and shipping new features for our students!";
+    public string Prompt => prompt;
 
     public UnityEvent<AudioClip> onCompletedTTS;
     public UnityEvent onErrorTTS;
