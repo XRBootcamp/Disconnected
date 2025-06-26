@@ -128,7 +128,6 @@ public class AIPipeline : MonoBehaviour
         GroqTTS newTTS = obj.GetComponent<GroqTTS>();
 
         newTTS.SetPrompt($"{obj.name} - FAKE PROMPT");
-        newTTS.ForceIsGenerated();
 
         PlayAiClip(fakeClip);
         listOfGeneratedGroqTTS.Add(newTTS);

@@ -3,17 +3,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Runware;
 using UnityEngine;
-using UnityEngine.Events;
-using Sirenix.OdinInspector;
-using UnityEditor;
-using TMPro;
 using System.Linq;
-using UnityEditor.Overlays;
 using System.Text.Json;
 using Assets.Disconnected.Scripts.AI.AIAssistant.API;
-using System.Linq.Expressions;
 using System.IO;
 
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Overlays;
+#endif
 
 [RequireComponent(typeof(RunwareTTI))]
 public class AISpeechToImage3dAssistant : BaseAIAssistant

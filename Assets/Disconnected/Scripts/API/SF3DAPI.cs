@@ -143,6 +143,7 @@ public class SF3DAPI : MonoBehaviour
     // Save the loaded model as a prefab for later use
     void SavePrefab(GameObject model)
     {
+        #if UNITY_EDITOR
         if (model != null)
         {
             // Ensure the prefab directory exists
@@ -152,6 +153,7 @@ public class SF3DAPI : MonoBehaviour
             }
 
             string prefabPath = Path.Combine(prefabDirectory, prefabName);
+
             PrefabUtility.SaveAsPrefabAsset(model, prefabPath); // Save the model as a prefab
             Debug.Log($"Prefab saved to: {prefabPath}");
         }
@@ -159,5 +161,6 @@ public class SF3DAPI : MonoBehaviour
         {
             Debug.LogError("Cannot save prefab. Model is null.");
         }
+        #endif
     }
 }

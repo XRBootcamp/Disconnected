@@ -134,6 +134,7 @@ public class SF3DAPIClient : IDisposable
 
     public void SavePrefab(GameObject model, string filename)
     {
+#if UNITY_EDITOR
         if (model != null)
         {
             // Ensure the prefab directory exists
@@ -160,9 +161,10 @@ public class SF3DAPIClient : IDisposable
         {
             Debug.LogError("Cannot save prefab. Model is null.");
         }
-
+#else
         // Debug.Log for non-UnityEditor environment (when not using the Unity Editor)
         Debug.Log($"[{nameof(SF3DAPIClient)}] - {nameof(SavePrefab)} - does not work outside UnityEditor.");
+#endif
     }
 
     public void Dispose()
