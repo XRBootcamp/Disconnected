@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Disconnected.Scripts.Core;
 using UnityEngine;
 using UnityEngine.UI;
 using Fragilem17.MirrorsAndPortals;
@@ -8,6 +10,8 @@ using UnityEngine.SceneManagement;
 
 public class PortalSceneLoading : MonoBehaviour
 {
+    
+    public SaveSystem saveSystem;
 
     [SerializeField] private bool _portalStartDisabled = true;
     [SerializeField] private List<string> _sceneNames = new List<string>();
@@ -99,6 +103,15 @@ public class PortalSceneLoading : MonoBehaviour
     {
         AsyncOperation loadOp = SceneManager.LoadSceneAsync(_sceneNames[_currentSceneIndex], LoadSceneMode.Additive);
         yield return new WaitUntil(() => loadOp.isDone);
+        
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName(_sceneNames[_currentSceneIndex]));
+        
+        Task loadTask = saveSystem.LoadLevelAsync(_sceneNames[_currentSceneIndex]);
+        while (!loadTask.IsCompleted)   // Wait for it to complete
+            yield return null;
+        
+        SceneManager.SetActiveScene(SceneManager.GetSceneAt(0));
+        
         EnablePortal();
     }
 
