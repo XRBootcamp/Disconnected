@@ -5,7 +5,7 @@ namespace Assets.Disconnected.Scripts.AI.AIAssistant.API
     /// <summary>
     /// Extension methods for AIAssistantText2ImageResponseModel.
     /// </summary>
-    public static class AIAssistantText2ImageRequestModelExtensions
+    public static class APITextToImageRequestModelExtensions
     {
         /// <summary>
         /// Converts an AIAssistantText2ImageResponseModel to a PromptCompiler instance, merging with a previous PromptCompiler if provided.
@@ -14,8 +14,8 @@ namespace Assets.Disconnected.Scripts.AI.AIAssistant.API
         /// <param name="previous">The previous PromptCompiler to merge from (optional).</param>
         /// <returns>A PromptCompiler instance with merged and updated values.</returns>
         /// <exception cref="ArgumentNullException">Thrown if response is null.</exception>
-        public static AIAssistantChatTextToImageRequestModel CreateTextToImageRequestModel(
-            this ChatInternalMemory chatData, 
+        public static APITextToImageRequestModel CreateTextToImageRequestModel(
+            this Image3dConfig chatData, 
             string newUserIntent,
             string userRequestIntro
         )
@@ -26,13 +26,13 @@ namespace Assets.Disconnected.Scripts.AI.AIAssistant.API
             }
 
             // Start with previous PromptCompiler's state if provided
-            var request = new AIAssistantChatTextToImageRequestModel();
+            var request = new APITextToImageRequestModel();
 
             // Overwrite with new response values where appropriate
             request.UserIntent = newUserIntent;
             request.UserRequestIntro = userRequestIntro;
             request.Text2ImageModel = chatData.promptCompiler.model.ToString();
-            request.PreviousAssistantResponse = chatData.assistantResponse;
+            request.PreviousAssistantResponse = chatData.AssistantResponse;
             request.PreviousPositivePrompt = chatData.promptCompiler.positivePrompt;
             request.PreviousNegativePrompt = chatData.promptCompiler.negativePrompt;
 

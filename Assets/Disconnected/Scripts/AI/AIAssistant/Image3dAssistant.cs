@@ -16,7 +16,7 @@ using UnityEditor.Overlays;
 
 [RequireComponent(typeof(RunwareTTI))]
 [RequireComponent(typeof(InteractionComponentManager))]
-public class AISpeechToImage3dAssistant : BaseAIAssistant
+public class Image3dAssistant : BaseAssistant
 {
 
     [Header("Image AIs")]
@@ -33,11 +33,20 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
     [SerializeField] private List<TextAsset> reasoningStaticSystemMessageDocuments;
     [SerializeField] private TextAsset buildingTextToImagePromptSystemDocument;
     [SerializeField] private TextAsset explainRuleSystemDocument;
-    [SerializeField] private ChatInternalMemory chatData;
+    [SerializeField] private Image3dConfig chatData;
 
     [Space]
     [Header("Debug - Text to Image")]
     [SerializeField] private Texture2D lastGeneratedImage;
+
+    public override BaseConfig Config 
+    { 
+        get => chatData; 
+        set => chatData = value as Image3dConfig; 
+    }
+
+    public override string DisplayName => "Image 3D Assistant";
+
 
     /// <summary>
     /// To populate everything I can right away
@@ -62,9 +71,9 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         imageTo3DAI = APIKeyLoader.Instance.SF3DApi;
     }
 
-    public override void Initialize(AIGameSettings gameSettings)
+    public override void Initialize(string id, BaseConfig config, AIGameSettings gameSettings)
     {
-        base.Initialize(gameSettings);
+        base.Initialize(id, config, gameSettings);
         textToImageAI.model = gameSettings.textToImageAIModelName;
 
         /*
@@ -91,6 +100,11 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         _reasoningAIService.AddTool(_reasoningAIService.ExplainRuleSystem(ProcessExplainRuleSystem));
     }
 
+    public override void Dispose()
+    {
+        throw new NotImplementedException();
+    }
+
     #region AI-Assistant-Main-Methods
 
     /// <summary>
@@ -101,7 +115,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         try
         {
             // just an audio snippet of assistant thinking to provide a sense of processing not in vacuum
-            var interjectionTask = AssistantAnswer(AssistantSpeechSnippets.EffortBasedInterjections.GetRandomEntry());
+            var interjectionTask = SetAssistantResponse(AssistantSpeechSnippets.EffortBasedInterjections.GetRandomEntry());
 
             // Call the base processing (transcription and reasoning)
             await base.ProcessUserRecordedIntentAsync();
@@ -114,7 +128,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         }
         catch (Exception e)
         {
-            Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)}] Error in ProcessUserRecordedIntentAsync: {e}");
+            Debug.LogError($"[{nameof(Image3dAssistant)}] Error in ProcessUserRecordedIntentAsync: {e}");
             throw; // Re-throw to let base class handle state reset
         }
     }
@@ -133,7 +147,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         }
         catch (Exception e)
         {
-            Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)}] Error in MakeRequestToAssistant: {e}");
+            Debug.LogError($"[{nameof(Image3dAssistant)}] Error in MakeRequestToAssistant: {e}");
             throw; // Re-throw to let base class handle the error
         }
     }
@@ -148,25 +162,25 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
     {
         try
         {
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} input:\n{arg}");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} input:\n{arg}");
 
             // get json parse it - and transform it into our response data model
             var jsonArgs = JsonDocument.Parse(arg);
-            var text2ImageResponse = JsonSerializer.Deserialize<AIAssistantText2ImageResponseModel>(jsonArgs.RootElement);
+            var text2ImageResponse = JsonSerializer.Deserialize<APIText2ImageResponseModel>(jsonArgs.RootElement);
 
             // collect data
             string assistantResponse = text2ImageResponse.assistantResponse;
             // transform response into new prompt compiler that will be available for the user later on at the end
             var newPromptCompiler = text2ImageResponse.ToPromptCompiler(chatData.promptCompiler);
 
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} PromptCompiler:\n{JsonSerializer.Serialize(newPromptCompiler)}");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} PromptCompiler:\n{JsonSerializer.Serialize(newPromptCompiler)}");
 
             // convert the promptCompiler into the API request model for the text to image prompt
             var request = newPromptCompiler.ToTextToImageRequestModel();
 
             // this return string is useless but it is what I am returning because GroqTTS requires me to return a string at the end 
             var returnString = JsonSerializer.Serialize(new { assistantResponse = $"{assistantResponse}", result = $"{request.ToString()}" });
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} TextToImageRequestModel:\n{returnString}");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} TextToImageRequestModel:\n{returnString}");
 
             // Generate text to image results based on prompt
             var imageResultsTask = textToImageAI.GenerateTextToImage(
@@ -204,15 +218,15 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
             // Wait for all model generation tasks to complete
             var generatedModels = await Task.WhenAll(modelTasks);
 
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Length} 3D models");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)}: Generated {generatedModels.Length} 3D models");
 
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} Completed!!!");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} Completed!!!");
 
             // TODO: part to invoke UI / UX changes in the main thread
             UnityMainThreadDispatcher.Instance().Enqueue(async () =>
             {
                 chatData.promptCompiler = newPromptCompiler;
-                chatData.assistantResponse = assistantResponse;
+                chatData.AssistantResponse = assistantResponse;
 
                 // TODO: UI Display stuff - event invoke
             });
@@ -221,18 +235,18 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
             // Now, after all model generation and main thread work, run AssistantAnswer
             // TODO: prompt better to have it running
             //_ = AssistantAnswer(assistantResponse);
-            _ = AssistantAnswer(AssistantSpeechSnippets.CreativeOutputReadyInterjections.GetRandomEntry()); // fire-and-forget, or await if you want to wait
+            _ = SetAssistantResponse(AssistantSpeechSnippets.CreativeOutputReadyInterjections.GetRandomEntry()); // fire-and-forget, or await if you want to wait
 
             return returnString;
         }
         catch (Exception e)
         {
-            string errorMessage = $"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} ERROR:\n{e}";
+            string errorMessage = $"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessTextToImagePrompt)} ERROR:\n{e}";
             Debug.LogError(errorMessage);
             errorOutput = errorMessage;
             AssistantOnErrorOccurred(errorMessage);
 
-            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            state = AssistantManager.Instance.SetStateAfterOnHold(this);
 
             return null;
         }
@@ -255,7 +269,7 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         try
         {
             // get json parse it - and transform it into our response data model
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} input:\n{arg}");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} input:\n{arg}");
             var jsonArgs = JsonDocument.Parse(arg);
             var jsonModel = JsonSerializer.Deserialize<AssistantResponseOnlyModel>(jsonArgs.RootElement);
 
@@ -264,9 +278,9 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
 
             var returnString = JsonSerializer.Serialize(jsonModel);
 
-            await AssistantAnswer(assistantResponse);
+            await SetAssistantResponse(assistantResponse);
 
-            Debug.Log($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} Completed!!!");
+            Debug.Log($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} Completed!!!");
 
             // TODO: if there is anything that needs to be done in the main thread
             /*
@@ -279,9 +293,9 @@ public class AISpeechToImage3dAssistant : BaseAIAssistant
         }
         catch (Exception e)
         {
-            Debug.LogError($"[{nameof(AISpeechToImage3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} ERROR:\n{e}");
+            Debug.LogError($"[{nameof(Image3dAssistant)} - {gameObject.name}] - {nameof(ProcessExplainRuleSystem)} ERROR:\n{e}");
             AssistantOnErrorOccurred(e.ToString());
-            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            state = AssistantManager.Instance.SetStateAfterOnHold(this);
             return null;
         }
     }

@@ -49,7 +49,7 @@ public class GroqTTS : MonoBehaviour
     public virtual PlayAIVoice SelectedVoice
     {
         get => selectedVoice;
-        set => selectedVoice = value;
+        set  { selectedVoice = value; onVoiceChange.Invoke(value); }
     }
     private const string responseFormat = "wav";
 
@@ -59,6 +59,7 @@ public class GroqTTS : MonoBehaviour
     [SerializeField] private string prompt = "I love building and shipping new features for our students!";
     public string Prompt => prompt;
 
+    public UnityEvent<PlayAIVoice> onVoiceChange;
     public UnityEvent<AudioClip> onCompletedTTS;
     public UnityEvent onErrorTTS;
 

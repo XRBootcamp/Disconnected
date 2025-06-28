@@ -15,15 +15,25 @@ using System.Diagnostics;
 
 
 [RequireComponent(typeof(GroqFilteredTTS))]
-public class AICharacterVoiceAssistant : BaseAIAssistant
+public class VoiceCharacterAssistant : BaseAssistant
 {
     [SerializeField] private GameObject characterVoicePrefab;
     [SerializeField] private GroqFilteredTTS characterTextToSpeechAI;
 
+    [SerializeField] private VoiceCharacterConfig voiceCharacterConfig;
+
+    public override BaseConfig Config 
+    { 
+        get => voiceCharacterConfig; 
+        set => voiceCharacterConfig = value as VoiceCharacterConfig; 
+    }
+    public VoiceCharacterConfig CharacterConfig => Config as VoiceCharacterConfig;
 
     // starts as null - it is the one being created by the prefab (but only once)
     // then it is forever referenced.
     public AudioSource CharacterVoiceSource { get; private set; }
+
+    public override string DisplayName => "Voice Character";
 
     /// <summary>
     /// To populate everything I can right away
@@ -39,6 +49,7 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
         base.Start();
 
         characterTextToSpeechAI.onCompletedTTS.AddListener(AssignNewCharacterClipToAudioSource);
+        
         ////characterTextToSpeechAI.onErrorTTS.AddListener(RemoveAudioClipFromCharacterAudioSource);
     }
 
@@ -47,9 +58,9 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
         characterTextToSpeechAI.SetPrompt(prompt);
     }
 
-    public override void Initialize(AIGameSettings gameSettings)
+    public override void Initialize(string id, BaseConfig config, AIGameSettings gameSettings)
     {
-        base.Initialize(gameSettings);
+        base.Initialize(id, config, gameSettings);
         // TODO: if using reasoning AI to create dialogues then I need to initialize it
     }
 
@@ -92,7 +103,7 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
             UnityEngine.Debug.LogError(e);
             errorOutput = e.ToString();
             AssistantOnErrorOccurred(e.ToString());
-            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            state = AssistantManager.Instance.SetStateAfterOnHold(this);
 
         }
 
@@ -103,7 +114,7 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
     {
 
         // assistant notifying the user that the voice is ready
-        await AssistantAnswer(AssistantSpeechSnippets.CharacterVoiceReadyPhrases.GetRandomEntry());
+        await SetAssistantResponse(AssistantSpeechSnippets.CharacterVoiceReadyPhrases.GetRandomEntry());
 
         // starts as null - it is the one being created by the prefab (but only once)
         // then it is forever referenced.
@@ -117,7 +128,7 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
             }
             else
             {
-                UnityEngine.Debug.LogError($"[{nameof(AICharacterVoiceAssistant)}] {characterVoicePrefab.name} prefab MUST HAVE AN AUDIOSOURCE HAS COMPONENT!");
+                UnityEngine.Debug.LogError($"[{nameof(VoiceCharacterAssistant)}] {characterVoicePrefab.name} prefab MUST HAVE AN AUDIOSOURCE HAS COMPONENT!");
             }
         }
 
@@ -130,6 +141,12 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
 
         CharacterVoiceSource.Stop();
         CharacterVoiceSource.clip = null;
+    }
+
+    public void SetCharacterVoiceVolume(float v)
+    {
+        voiceCharacterConfig.Volume = v;
+        CharacterVoiceSource.volume = v;
     }
 
     [Button]
@@ -165,6 +182,11 @@ public class AICharacterVoiceAssistant : BaseAIAssistant
 
         characterTextToSpeechAI.onCompletedTTS.RemoveListener(AssignNewCharacterClipToAudioSource);
         //characterTextToSpeechAI.onErrorTTS.RemoveListener(RemoveAudioClipFromCharacterAudioSource);
+    }
+
+    public override void Dispose()
+    {
+        throw new NotImplementedException();
     }
 
 }

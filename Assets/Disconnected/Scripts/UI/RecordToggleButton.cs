@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using UnityEngine.Events;
 
 public class RecordToggleButton : MonoBehaviour
 {
@@ -22,11 +23,10 @@ public class RecordToggleButton : MonoBehaviour
     {
         idleColor = background.color;
     }
-    
-    public void ToggleRecording()
+
+    public void ToggleUiRecordingChanges()
     {
         isRecording = !isRecording;
-
         Color targetColor = isRecording ? recordingColor : idleColor;
 
         // Animate color
@@ -35,8 +35,11 @@ public class RecordToggleButton : MonoBehaviour
         // Optional: Add a punch scale animation
         background.transform.DOPunchScale(Vector3.one * scalePunch, 0.3f, vibrato: 4, elasticity: 0.7f);
 
+        
         // change color
         //var nextButtonColor = isRecording ? button.colors.pressedColor : button.colors.normalColor;
         //button.targetGraphic.DOColor(nextButtonColor, colorDuration);
+        // NOTE: most important bit of all
     }
+
 }

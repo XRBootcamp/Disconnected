@@ -14,7 +14,7 @@ using UnityEditor.Overlays;
 [RequireComponent(typeof(WhisperTranscriber))]
 [RequireComponent(typeof(GroqTTS))]
 [RequireComponent(typeof(AudioSource))]
-public abstract class BaseAIAssistant : MonoBehaviour
+public abstract class BaseAssistant : MonoBehaviour
 {
     public enum State
     {
@@ -22,18 +22,20 @@ public abstract class BaseAIAssistant : MonoBehaviour
         Selected = 1, // when selected by user
         OnHold = 2 // when calling the API
     }
-
     [SerializeField] protected MicRecorder micRecorder;
     [SerializeField] protected WhisperTranscriber speech2TextAI;
     [SerializeField] protected GroqTTS assistantTextToSpeechAI;
     [SerializeField] protected AudioSource assistantAudioSource;
-    protected AIAssistantReasoningController _reasoningAIService;
+    protected AssistantReasoningController _reasoningAIService;
 
     [Space]
     [Header("Debug")]
     [SerializeField] protected AIClientToggle aiClientToggle;
     [Space]
     [SerializeField] protected State state;
+
+    public abstract BaseConfig Config {get; set; }
+    protected bool _isRecordingUser;
 
     [SerializeField] protected AudioClip micRecording;
     [SerializeField, TextArea(5, 20)] protected string userIntent;
@@ -42,14 +44,18 @@ public abstract class BaseAIAssistant : MonoBehaviour
     [SerializeField, TextArea(2, 20)] protected string errorOutput;
 
     // TODO: these unity events we will see what makes sense
-    public UnityEvent<BaseAIAssistant> onApiResponse;
-    public UnityEvent<BaseAIAssistant> onApiRequest;
-    public UnityEvent<BaseAIAssistant> onSelected;
-    public UnityEvent<BaseAIAssistant> onUnselected;
-    public UnityEvent<BaseAIAssistant> onClosing;
+    public UnityEvent<string> onApiResponse;
+    public UnityEvent<string> onApiRequest;
+    public UnityEvent<string> onSelected;
+    public UnityEvent<string> onUnselected;
+    public UnityEvent<string> onClosing;
 
     public State CurrentState { get => state; set => state = value; }
 
+
+    public string Id { get; private set; }
+
+    public abstract string DisplayName {get;}
 
     /// <summary>
     /// To populate everything I can right away
@@ -78,6 +84,9 @@ public abstract class BaseAIAssistant : MonoBehaviour
         micRecorder.onDurationPassed.AddListener(DiscardMicRecording);
     }
 
+    // TODO: if needed
+    public abstract void Dispose(); // cleanup if needed
+
     // NOTE: to simplify the process
     protected virtual void OnDestroy()
     {
@@ -88,12 +97,15 @@ public abstract class BaseAIAssistant : MonoBehaviour
         onClosing.RemoveAllListeners();
     }
 
-    public virtual void Initialize(AIGameSettings gameSettings)
+    public virtual void Initialize(string id, BaseConfig config, AIGameSettings gameSettings)
     {
+        Id = id;
+        Config = config;
+
         MicRecorderManager.Instance.RegisterRecorder(micRecorder);
         assistantTextToSpeechAI.SetVoice(gameSettings.aiAssistantVoice);
 
-        _reasoningAIService = new AIAssistantReasoningController(
+        _reasoningAIService = new AssistantReasoningController(
             model: gameSettings.aiReasoningModel,
             currentSystemMessage: null,
             image2TextModelName: null,
@@ -105,25 +117,44 @@ public abstract class BaseAIAssistant : MonoBehaviour
     }
 
     #region Handle User Recordings
-    public virtual void StartRecordingUser()
+    public virtual void ToggleRecording()
+    {
+        if (!_isRecordingUser)
+        {
+            StartRecordingUser();
+        }
+        else
+        {
+            StopRecording();
+        }
+    }
+
+    protected virtual void StartRecordingUser()
     {
         // NOTE: only record when it is over
         if (state == State.OnHold) return;
 
         state = State.OnHold;
         micRecorder.StartRecording();
+        _isRecordingUser = true;
     }
 
-    public virtual void StopRecording()
+    protected virtual void StopRecording()
     {
         // this triggers the onRecordedAudio once it is saved and we can proceed with everything
         // from UserRecordedIntent
         micRecorder.StopAndSave();
+        _isRecordingUser = false;
     }
 
     #endregion
 
     #region AI-Assistant-Main-Methods
+
+    public void SetUserIntent(string newIntent)
+    {
+        Config.UserIntent = newIntent;
+    }
 
     // TODO: unsure if this is the intended behaviour when mic audio duration surpassed the full possible duration
     protected virtual void DiscardMicRecording(AudioClip clip = null)
@@ -132,7 +163,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
         micRecording = null;
 
         // reset state once it has been handled
-        state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+        state = AssistantManager.Instance.SetStateAfterOnHold(this);
     }
 
     /// <summary>
@@ -163,12 +194,12 @@ public abstract class BaseAIAssistant : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[{nameof(BaseAIAssistant)}] Error processing user recorded intent: {e}");
+            Debug.LogError($"[{nameof(BaseAssistant)}] Error processing user recorded intent: {e}");
         }
         finally
         {
             // reset state once it has been handled
-            state = AIAssistantManager.Instance.SetStateAfterOnHold(this);
+            state = AssistantManager.Instance.SetStateAfterOnHold(this);
         }
     }
 
@@ -181,7 +212,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
         await Task.Yield();
     }
 
-    protected Task<GroqTTS> AssistantAnswer(string assistantResponse)
+    protected Task<GroqTTS> SetAssistantResponse(string assistantResponse)
     {
         try
         {
@@ -199,7 +230,7 @@ public abstract class BaseAIAssistant : MonoBehaviour
     {
         try
         {
-            await AssistantAnswer(AssistantSpeechSnippets.ErrorInterjections.GetRandomEntry());
+            await SetAssistantResponse(AssistantSpeechSnippets.ErrorInterjections.GetRandomEntry());
         }
         catch (Exception e)
         {
@@ -215,15 +246,15 @@ public abstract class BaseAIAssistant : MonoBehaviour
     public void OnSelect()
     {
         // Use the singleton instance
-        AIAssistantManager.Instance.SelectAssistant(this);
-        onSelected.Invoke(this);
+        AssistantManager.Instance.SelectAssistant(Id);
+        onSelected.Invoke(Id);
     }
 
     public void OnUnselect()
     {
         // Use the singleton instance
-        AIAssistantManager.Instance.TryUnselectAssistant(this);
-        onUnselected.Invoke(this);
+        AssistantManager.Instance.TryUnselectAssistant(Id);
+        onUnselected.Invoke(Id);
     }
 
     public void ClosingChat()
@@ -235,9 +266,9 @@ public abstract class BaseAIAssistant : MonoBehaviour
         }
 
         // Use the singleton instance
-        AIAssistantManager.Instance.RemoveAssistant(this);
+        AssistantManager.Instance.RemoveAssistant(Id);
         MicRecorderManager.Instance.UnregisterRecorder(micRecorder);
-        onClosing.Invoke(this);
+        onClosing.Invoke(Id);
 
         // TODO: UI/Animation - destroy the object clearly
 

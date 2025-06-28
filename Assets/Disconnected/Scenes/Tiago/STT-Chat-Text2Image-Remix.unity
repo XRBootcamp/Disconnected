@@ -9902,6 +9902,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: c6984c48aed9a154294088f4265d8478, type: 3}
       insertIndex: -1
       addedObject: {fileID: 519241230}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: c6984c48aed9a154294088f4265d8478, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1825550222}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c6984c48aed9a154294088f4265d8478, type: 3}
       insertIndex: -1
@@ -17555,6 +17558,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedVoice: 14
   prompt: I love building and shipping new features for our students!
+  onVoiceChange:
+    m_PersistentCalls:
+      m_Calls: []
   onCompletedTTS:
     m_PersistentCalls:
       m_Calls: []
@@ -21179,6 +21185,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1820568473}
   m_CullTransparentMesh: 1
+--- !u!1001 &1825550221
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1027589981}
+    m_Modifications:
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -9.663717
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -6.946447
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -8.91283
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8922837929681574246, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+      propertyPath: m_Name
+      value: AIVoiceCharacterAssistant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+--- !u!4 &1825550222 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6925302362569539761, guid: 04a24531e1c141d45a4328c79cab2225, type: 3}
+  m_PrefabInstance: {fileID: 1825550221}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1826007319
 GameObject:
   m_ObjectHideFlags: 0

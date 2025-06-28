@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 
 [Serializable]
-public class AIAssistantText2ImageResponseModel
+public class APIText2ImageResponseModel
 {
     /// <summary>
     /// You as my lovely assistant clearly narrates what was updated, confirmed or answered in a user's intent.
@@ -116,7 +116,7 @@ public class AIAssistantText2ImageResponseModel
 }
 
 [Serializable]
-public class ImageSessionPreferencesResponseModel
+public class APISessionPreferencesResponseModel
 {
     /// <summary>
     /// You as my lovely assistant clearly narrates what was updated, confirmed or answered in a user's intent.
@@ -162,7 +162,7 @@ public class ImageSessionPreferencesResponseModel
 }
 
 [Serializable]
-public class ImageChatOverridesResponseModel
+public class APIChatPreferencesResponseModel
 {
     /// <summary>
     /// You as my lovely assistant clearly narrates what was updated, confirmed or answered in a user's intent.

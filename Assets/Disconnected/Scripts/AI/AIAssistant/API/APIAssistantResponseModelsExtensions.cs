@@ -7,7 +7,7 @@ namespace Assets.Disconnected.Scripts.AI.AIAssistant.API
     /// <summary>
     /// Extension methods for AIAssistantText2ImageResponseModel.
     /// </summary>
-    public static class AIAssistantText2ImageResponseModelExtensions
+    public static class APIAssistantResponseModelExtensions
     {
         /// <summary>
         /// Converts an AIAssistantText2ImageResponseModel to a PromptCompiler instance, merging with a previous PromptCompiler if provided.
@@ -16,7 +16,7 @@ namespace Assets.Disconnected.Scripts.AI.AIAssistant.API
         /// <param name="previous">The previous PromptCompiler to merge from (optional).</param>
         /// <returns>A PromptCompiler instance with merged and updated values.</returns>
         /// <exception cref="ArgumentNullException">Thrown if response is null.</exception>
-        public static PromptCompiler ToPromptCompiler(this AIAssistantText2ImageResponseModel response, PromptCompiler previous = null)
+        public static Image3dPromptCompiler ToPromptCompiler(this APIText2ImageResponseModel response, Image3dPromptCompiler previous = null)
         {
             if (response == null)
             {
@@ -24,7 +24,7 @@ namespace Assets.Disconnected.Scripts.AI.AIAssistant.API
             }
 
             // Start with previous PromptCompiler's state if provided
-            var compiler = new PromptCompiler(previous);
+            var compiler = new Image3dPromptCompiler(previous);
 
             // Overwrite with new response values where appropriate
             compiler.model = RunwareExtensions.ToTextToImageAIModel(response.model) ?? TextToImageAIModel.Flux1Schnell;

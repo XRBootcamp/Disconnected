@@ -5,7 +5,7 @@ using UnityEngine;
 
 
 [Serializable]
-public class AIAssistantChatTextToImageRequestModel
+public class APITextToImageRequestModel
 {
     /// Constants - Invariable user prompt regardless of funcion (to deliver best results)
     public string UserRequestIntro { get; set; }

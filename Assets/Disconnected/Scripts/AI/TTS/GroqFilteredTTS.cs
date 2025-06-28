@@ -43,6 +43,7 @@ public class GroqFilteredTTS : GroqTTS
             {
                 filteredSelectedVoice = value;
             }
+            onVoiceChange.Invoke(value);
         }
     }
 

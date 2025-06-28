@@ -4,20 +4,23 @@ using Runware;
 using UnityEngine;
 
 [Serializable]
-public class ChatInternalMemory
+public class Image3dConfig : BaseConfig
 {
-    public string assistantResponse;
-    public PromptCompiler promptCompiler;
-    public ImageChatOverrides chatOverrides;
-    public ImageSessionPreferences sessionPreferences;
+    public override string AssistantResponse { get; set; }
+    public override string UserIntent { get; set; }
+    public Image3dPromptCompiler promptCompiler;
+    public Image3dChatOverrides chatOverrides;
+    public Image3dSessionPreferences sessionPreferences;
 
 }
 
+
+// TODO: session preferences becomes a scriptable object - so it pervades on AI Assistant Manager down to others
 /// <summary>
 /// Unity model for session preferences - used in actual Unity code
 /// </summary>
 [Serializable]
-public class ImageSessionPreferences
+public class Image3dSessionPreferences
 {
     /// <summary>
     /// Can be overridden per chat
@@ -39,13 +42,13 @@ public class ImageSessionPreferences
     /// </summary>
     public ImageTarget? target { get; set; } = null;
 
-    public ImageSessionPreferences() {}
+    public Image3dSessionPreferences() {}
     /// <summary>
     /// Convert from API response model to Unity model
     /// </summary>
-    public static ImageSessionPreferences FromResponseModel(ImageSessionPreferencesResponseModel responseModel)
+    public static Image3dSessionPreferences FromResponseModel(APISessionPreferencesResponseModel responseModel)
     {
-        return new ImageSessionPreferences
+        return new Image3dSessionPreferences
         {
             imageArtStyle = responseModel.style,
             allowNsfw = responseModel.allowNsfw,
@@ -57,9 +60,9 @@ public class ImageSessionPreferences
     /// <summary>
     /// Convert Unity model to API response model
     /// </summary>
-    public ImageSessionPreferencesResponseModel ToResponseModel()
+    public APISessionPreferencesResponseModel ToResponseModel()
     {
-        return new ImageSessionPreferencesResponseModel
+        return new APISessionPreferencesResponseModel
         {
             style = this.imageArtStyle,
             allowNsfw = this.allowNsfw,
@@ -73,7 +76,7 @@ public class ImageSessionPreferences
 /// Unity model for chat overrides - used in actual Unity code
 /// </summary>
 [Serializable]
-public class ImageChatOverrides
+public class Image3dChatOverrides
 {
     /// <summary>
     /// Per-chat visual styling
@@ -110,14 +113,14 @@ public class ImageChatOverrides
     /// </summary>
     public ImageTarget? target { get; set; } = null;
 
-    public ImageChatOverrides() {}
+    public Image3dChatOverrides() {}
 
     /// <summary>
     /// Convert from API response model to Unity model
     /// </summary>
-    public static ImageChatOverrides FromResponseModel(ImageChatOverridesResponseModel responseModel)
+    public static Image3dChatOverrides FromResponseModel(APIChatPreferencesResponseModel responseModel)
     {
-        return new ImageChatOverrides
+        return new Image3dChatOverrides
         {
             imageArtStyle = responseModel.style,
             imageShape = TTIEnumExtensions.ParseImageShape(responseModel.imageShape),
@@ -132,9 +135,9 @@ public class ImageChatOverrides
     /// <summary>
     /// Convert Unity model to API response model
     /// </summary>
-    public ImageChatOverridesResponseModel ToResponseModel()
+    public APIChatPreferencesResponseModel ToResponseModel()
     {
-        return new ImageChatOverridesResponseModel
+        return new APIChatPreferencesResponseModel
         {
             style = this.imageArtStyle,
             imageShape = this.imageShape.ToString(),
@@ -149,7 +152,7 @@ public class ImageChatOverrides
 }
 
 [Serializable]
-public class PromptCompiler
+public class Image3dPromptCompiler
 {
     public TextToImageAIModel model { get; set; }
     public string positivePrompt { get; set; }
@@ -167,9 +170,9 @@ public class PromptCompiler
     [NonSerialized] private int defaultSteps = 20; // according to Runware documentation
     [NonSerialized] private double defaultCfgscale = 7; // according to Runware documentation
 
-    public PromptCompiler() {}
+    public Image3dPromptCompiler() {}
     // New constructor for merging
-    public PromptCompiler(PromptCompiler previous = null)
+    public Image3dPromptCompiler(Image3dPromptCompiler previous = null)
     {
         if (previous != null)
         {

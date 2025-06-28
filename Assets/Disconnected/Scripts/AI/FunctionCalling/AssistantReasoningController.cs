@@ -9,7 +9,7 @@ using UnityEngine;
 /// Project-specific controller for AI assistant reasoning, extending the core service.
 /// Handles system message assignment, document merging, and tool configuration.
 /// </summary>
-public class AIAssistantReasoningController : GroqReasoningService
+public class AssistantReasoningController : GroqReasoningService
 {
     private readonly string _delimiter_ = "\n\n------------------------------------------------------------------------------------\n\n";
     
@@ -23,7 +23,7 @@ public class AIAssistantReasoningController : GroqReasoningService
 
     /// <param name="image2TextModelName">The image-to-text model name.</param>
 
-    public AIAssistantReasoningController(
+    public AssistantReasoningController(
         string model,
         string currentSystemMessage,
         string image2TextModelName,
@@ -63,7 +63,7 @@ public class AIAssistantReasoningController : GroqReasoningService
     }
 
     public async Task<string> RunReasoningAsync(
-        ChatInternalMemory chatInternalMemory,
+        Image3dConfig chatInternalMemory,
         string userIntent)
     {
         if (APIKeyLoader.Instance == null)
@@ -94,7 +94,7 @@ public class AIAssistantReasoningController : GroqReasoningService
             {
                 Name = "build_text_2_image_prompt",
                 Description = BuildTextToImagePromptDescription,
-                Parameters = ParametersGenerator.GenerateParameters(typeof(AIAssistantText2ImageResponseModel)),
+                Parameters = ParametersGenerator.GenerateParameters(typeof(APIText2ImageResponseModel)),
                 /*
                 Parameters = new Parameters
                 {
