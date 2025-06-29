@@ -22,10 +22,10 @@ public class VoiceCharacterAssistant : BaseAssistant
 
     [SerializeField] private VoiceCharacterConfig voiceCharacterConfig;
 
-    public override BaseConfig Config 
-    { 
-        get => voiceCharacterConfig; 
-        set => voiceCharacterConfig = value as VoiceCharacterConfig; 
+    public override BaseConfig Config
+    {
+        get => voiceCharacterConfig;
+        set => voiceCharacterConfig = value as VoiceCharacterConfig;
     }
     public VoiceCharacterConfig CharacterConfig => Config as VoiceCharacterConfig;
 
@@ -49,11 +49,11 @@ public class VoiceCharacterAssistant : BaseAssistant
         base.Start();
 
         characterTextToSpeechAI.onCompletedTTS.AddListener(AssignNewCharacterClipToAudioSource);
-        
+
         ////characterTextToSpeechAI.onErrorTTS.AddListener(RemoveAudioClipFromCharacterAudioSource);
     }
 
-    public void OverrideCharacterTextPrompt(string prompt)
+    public void SetCharacterTextPrompt(string prompt)
     {
         characterTextToSpeechAI.SetPrompt(prompt);
     }
@@ -133,6 +133,7 @@ public class VoiceCharacterAssistant : BaseAssistant
         }
 
         CharacterVoiceSource.clip = newCharacterClip;
+        CharacterVoiceSource.volume = voiceCharacterConfig.Volume;
     }
 
     private void RemoveAudioClipFromCharacterAudioSource()
@@ -146,7 +147,11 @@ public class VoiceCharacterAssistant : BaseAssistant
     public void SetCharacterVoiceVolume(float v)
     {
         voiceCharacterConfig.Volume = v;
-        CharacterVoiceSource.volume = v;
+        // if not generated yet
+        if (CharacterVoiceSource != null)
+        {
+            CharacterVoiceSource.volume = v;
+        }
     }
 
     [Button]
@@ -167,6 +172,12 @@ public class VoiceCharacterAssistant : BaseAssistant
     [Button]
     public async void OverridePromptWithVoice()
     {
+        if (string.IsNullOrWhiteSpace(characterTextToSpeechAI.Prompt))
+        {
+            UnityEngine.Debug.LogWarning($"[{nameof(VoiceCharacterAssistant)}] - Set Text: Empty - nothing done");
+            // TODO: add warning message
+            return;
+        }
         await characterTextToSpeechAI.GenerateTTS(
             text: characterTextToSpeechAI.Prompt,
             saveClipInRootPath: FileEnumPath.Persistent,

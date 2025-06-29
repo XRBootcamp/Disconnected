@@ -12,13 +12,14 @@ public class VoiceCharacterUIAssistant : BaseUIAssistant
 {
     private VoiceCharacterAssistant voiceAssistant;
 
-    [SerializeField] private TMP_InputField characterTextInput;
+    [SerializeField] private TMP_InputField voiceTextInput;
 
     [SerializeField] private Slider volumeSlider;
     [SerializeField] private TMP_Dropdown voiceDropdown;
 
     [SerializeField] private Button recordUserButton;
     [SerializeField] private Button createVoiceButton;
+    [SerializeField] private Button playVoiceButton;
 
     public override void Bind(BaseAssistant assistant)
     {
@@ -27,17 +28,40 @@ public class VoiceCharacterUIAssistant : BaseUIAssistant
 
         UpdateDropdownOptions();
 
+        // NOTE: Important
         volumeSlider.onValueChanged.AddListener(v => voiceAssistant.SetCharacterVoiceVolume(v));
         voiceDropdown.onValueChanged.AddListener(TrySetNewCharacterVoice);
+        voiceTextInput.onEndEdit.AddListener(SetNewUserIntent);
+
         recordUserButton.onClick.AddListener(voiceAssistant.ToggleRecording);
         createVoiceButton.onClick.AddListener(voiceAssistant.OverridePromptWithVoice);
-        characterTextInput.onEndEdit.AddListener(t => voiceAssistant.SetUserIntent(t));
+        playVoiceButton.onClick.AddListener(voiceAssistant.PlayCharacterVoice);
+    }
+
+    private void SetNewUserIntent(string newTextInput)
+    {
+        // NOTE: this part always
+
+        // TODO: write now I can convert user intent to a new dialogue, it just copies the stuff and goes
+        voiceAssistant.SetUserIntent(newTextInput);
+        // NOTE: remove this line once user intent goes through a LLM and creates a dialogue
+        voiceAssistant.SetCharacterTextPrompt(newTextInput);
     }
 
     // use in inspector temporarily
     public void EnableCreateVoice(string newTextInput)
     {
-        createVoiceButton.interactable = !string.IsNullOrWhiteSpace(newTextInput);
+        bool isTextNull = string.IsNullOrWhiteSpace(newTextInput);
+
+        createVoiceButton.interactable = !isTextNull;
+
+        /*
+        // reset play button if null
+        if (isTextNull)
+        {
+            playVoiceButton.interactable = false;
+        }
+        */
     }
 
     private void TrySetNewCharacterVoice(int i)
@@ -58,12 +82,21 @@ public class VoiceCharacterUIAssistant : BaseUIAssistant
 
     private void OnDestroy()
     {
+        Unbind();
+    }
+
+    public override void Unbind()
+    {
         if (voiceAssistant != null)
         {
             volumeSlider.onValueChanged.RemoveListener(v => voiceAssistant.SetCharacterVoiceVolume(v));
             voiceDropdown.onValueChanged.RemoveListener(TrySetNewCharacterVoice);
+            voiceTextInput.onEndEdit.RemoveListener(SetNewUserIntent);
+
             recordUserButton.onClick.RemoveListener(voiceAssistant.ToggleRecording);
             createVoiceButton.onClick.RemoveListener(voiceAssistant.OverridePromptWithVoice);
+            playVoiceButton.onClick.RemoveListener(voiceAssistant.PlayCharacterVoice);
+            voiceAssistant = null;
         }
     }
 }

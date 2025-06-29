@@ -7,6 +7,7 @@ using UnityEngine;
 public class AssistantManager : MonoBehaviour
 {
     [SerializeField] private AIGameSettings aiGameSettings;
+    public AIGameSettings AISettings => aiGameSettings;
     [SerializeField] private GameObject aiSpeechToImage3dAssistant;
     [SerializeField] private GameObject voiceCharactersAssistant;
 
@@ -16,7 +17,7 @@ public class AssistantManager : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private AIClientToggle aiClientToggle;
-    
+
     [SerializeField] private Transform debugSpawnImage3dLocation;
     [SerializeField] private Transform debugSpawnVoiceCharacterLocation;
 
@@ -65,49 +66,27 @@ public class AssistantManager : MonoBehaviour
     }
 
 
-    public void CreateNewImageTo3dChat(Vector3 position, Quaternion rotation)
+    public void CreateNewImageTo3dChat(Vector3 position, Quaternion rotation, Transform parent)
     {
-        var id = Guid.NewGuid().ToString();
-
         // FIXME: assign position, rotation
-        var obj = Instantiate(aiSpeechToImage3dAssistant, position, rotation);
-
-        VoiceCharacterAssistant newAssistant = obj.GetComponentInChildren<VoiceCharacterAssistant>();
-
-        var config = new Image3dConfig();
-
-        newAssistant.Initialize(id, config, aiGameSettings);
-
-        // ui assistant
-        var uiComponent = obj.GetComponentInChildren<Image3dUIAssistant>();
-        uiComponent.Bind(newAssistant);
-
-        assistantsList.Add(id, newAssistant);
-        newAssistant.onClosing.AddListener(RemoveAssistant);
+        var obj = Instantiate(aiSpeechToImage3dAssistant, position, rotation, parent);
     }
-    public void CreateNewVoiceCharacter(Vector3 position, Quaternion rotation)
+    public void CreateNewVoiceCharacter(Vector3 position, Quaternion rotation, Transform parent)
     {
-        var id = Guid.NewGuid().ToString();
-
         // FIXME: assign position, rotation
-        var obj = Instantiate(voiceCharactersAssistant);
-        VoiceCharacterAssistant newAssistant = obj.GetComponentInChildren<VoiceCharacterAssistant>();
-
-        var config = new VoiceCharacterConfig();
-
-        newAssistant.Initialize(id, config, aiGameSettings);
-
-        var uiComponent = obj.GetComponentInChildren<VoiceCharacterUIAssistant>();
-        uiComponent.Bind(newAssistant);
-
-        assistantsList.Add(id, newAssistant);
-        newAssistant.onClosing.AddListener(RemoveAssistant);
+        var obj = Instantiate(voiceCharactersAssistant, position, rotation, parent);
     }
 
 
     public BaseAssistant.State SetStateAfterOnHold(BaseAssistant aiAssistant)
     {
         return currentAssistant == aiAssistant ? BaseAssistant.State.Selected : BaseAssistant.State.None;
+    }
+
+    public void AddAssistant(string id, BaseAssistant newAssistant)
+    {
+        assistantsList.Add(id, newAssistant);
+        newAssistant.onClosing.AddListener(RemoveAssistant);
     }
 
     public void SelectAssistant(string id)
@@ -151,16 +130,21 @@ public class AssistantManager : MonoBehaviour
         }
     }
 
-    
+
     [Button]
     public void CreateNewImageTo3dChat()
     {
-        CreateNewImageTo3dChat(debugSpawnImage3dLocation?.position ?? Vector3.zero, debugSpawnImage3dLocation?.rotation ?? Quaternion.identity);
+        Vector3 pos = debugSpawnImage3dLocation != null ? debugSpawnImage3dLocation.position : Vector3.zero;
+        Quaternion rot = debugSpawnImage3dLocation != null ? debugSpawnImage3dLocation.rotation : Quaternion.identity;
+
+        CreateNewImageTo3dChat(pos, rot, null);
     }
 
     [Button]
     public void CreateNewVoiceCharacter()
     {
-        CreateNewVoiceCharacter(debugSpawnVoiceCharacterLocation?.position ?? Vector3.zero, debugSpawnVoiceCharacterLocation?.rotation ?? Quaternion.identity);
+        Vector3 pos = debugSpawnVoiceCharacterLocation != null ? debugSpawnVoiceCharacterLocation.position : Vector3.zero;
+        Quaternion rot = debugSpawnVoiceCharacterLocation != null ? debugSpawnVoiceCharacterLocation.rotation : Quaternion.identity;
+        CreateNewVoiceCharacter(pos, rot, null);
     }
 }

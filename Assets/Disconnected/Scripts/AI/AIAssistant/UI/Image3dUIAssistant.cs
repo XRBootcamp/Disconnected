@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /// </summary>
 public class Image3dUIAssistant : BaseUIAssistant
 {
-    private VoiceCharacterAssistant image3dAssistant;
+    private Image3dAssistant image3dAssistant;
 
     [SerializeField] private TMP_InputField characterTextInput;
 
@@ -19,8 +19,8 @@ public class Image3dUIAssistant : BaseUIAssistant
 
     public override void Bind(BaseAssistant assistant)
     {
-        image3dAssistant = assistant as VoiceCharacterAssistant;
-        
+        image3dAssistant = assistant as Image3dAssistant;
+
         recordUserButton.onClick.AddListener(image3dAssistant.ToggleRecording);
         // TODO: later on
         //sendRequestButton.onClick.AddListener(image3dAssistant.OverridePromptWithVoice);
@@ -28,18 +28,26 @@ public class Image3dUIAssistant : BaseUIAssistant
     }
 
     // use in inspector temporarily
-    public void EnableCreateVoice(string newTextInput)
+    public void EnableSendRequest(string newTextInput)
     {
         sendRequestButton.interactable = !string.IsNullOrWhiteSpace(newTextInput);
     }
 
-    private void OnDestroy()
+    public override void Unbind()
     {
         if (image3dAssistant != null)
         {
-            // TODO: later on
             recordUserButton.onClick.RemoveListener(image3dAssistant.ToggleRecording);
+            // TODO: later on
             //sendRequestButton.onClick.RemoveListener(image3dAssistant.OverridePromptWithVoice);
+            characterTextInput.onEndEdit.RemoveListener(t => image3dAssistant.SetUserIntent(t));
+            image3dAssistant = null;
         }
+
+    }
+
+    private void OnDestroy()
+    {
+        Unbind(); // for precaution
     }
 }
